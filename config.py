@@ -6,6 +6,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB
     UPLOAD_FOLDER = 'app/media'
+    QR_BASE_URL = os.environ.get('QR_BASE_URL', '').rstrip('/')
 
 class DevelopmentConfig(Config):
     DEBUG = True

@@ -45,6 +45,8 @@ class Gestell(db.Model):
                                     order_by='Regalfach.position_index')
     behaelter = db.relationship('Behaelter', backref='gestell', lazy=True,
                                  foreign_keys='Behaelter.gestell_id')
+    dinge = db.relationship('Ding', backref='gestell', lazy=True,
+                             foreign_keys='Ding.gestell_id')
 
     def __repr__(self):
         return f'<Gestell {self.name}>'

@@ -38,11 +38,20 @@
         <i class="bi bi-bookshelf me-2"></i>
         <strong>{{ gestell.name }}</strong>
         {% if gestell.typ %}<small class="text-muted ms-2">{{ gestell.typ }}</small>{% endif %}
-        <span class="badge bg-secondary ms-2">{{ gestell.regalfaecher|length }} Fächer</span>
+        {% if gestell.regalfaecher %}
+          <span class="badge bg-secondary ms-2">{{ gestell.regalfaecher|length }} Fächer</span>
+        {% endif %}
+        {% if gestell.behaelter %}
+          <span class="badge bg-secondary ms-1">{{ gestell.behaelter|length }} Behälter</span>
+        {% endif %}
+        {% if gestell.dinge %}
+          <span class="badge bg-primary ms-1">{{ gestell.dinge|length }} Dinge</span>
+        {% endif %}
       </button>
     </h2>
     <div id="g{{ gestell.id }}" class="accordion-collapse collapse">
       <div class="accordion-body p-2">
+        {# Regalfächer #}
         {% for fach in gestell.regalfaecher %}
         <div class="mb-2">
           <a href="{{ url_for('standort.regalfach_detail', id=fach.id) }}"
@@ -63,9 +72,36 @@
           </ul>
           {% endif %}
         </div>
-        {% else %}
-        <span class="text-muted small">Keine Fächer.</span>
         {% endfor %}
+        {# Direkte Behälter im Gestell (ohne Regalfach) #}
+        {% if gestell.behaelter %}
+        {% if gestell.regalfaecher %}<hr class="my-2">{% endif %}
+        {% for b in gestell.behaelter | sort(attribute='name') %}
+        <div class="mb-1">
+          <a href="{{ url_for('standort.behaelter_detail', id=b.id) }}"
+             class="text-decoration-none">
+            <i class="bi bi-box-seam me-1 text-muted"></i>
+            <span class="fw-bold">{{ b.name }}</span>
+            {% if b.typ %}<small class="text-muted ms-1">({{ b.typ }})</small>{% endif %}
+            <span class="badge bg-light text-dark ms-1">{{ b.dinge|length }}</span>
+          </a>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {# Dinge direkt im Gestell #}
+        {% if gestell.dinge %}
+        {% if gestell.regalfaecher or gestell.behaelter %}<hr class="my-2">{% endif %}
+        {% for ding in gestell.dinge | sort(attribute='name') %}
+        <div class="mb-1">
+          <a href="{{ url_for('ding.detail', id=ding.id) }}" class="text-decoration-none">
+            <i class="bi bi-tag me-1 text-muted"></i>{{ ding.name }}
+          </a>
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% if not gestell.regalfaecher and not gestell.behaelter and not gestell.dinge %}
+        <span class="text-muted small">Leer.</span>
+        {% endif %}
       </div>
     </div>
   </div>

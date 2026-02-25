@@ -265,6 +265,12 @@ def behaelter_detail(id):
     return render_template('standort/behaelter_detail.html', behaelter=behaelter)
 
 
+@standort_bp.route('/gestelle/<int:id>')
+def gestell_detail(id):
+    gestell = Gestell.query.get_or_404(id)
+    return render_template('standort/gestell_detail.html', gestell=gestell)
+
+
 @standort_bp.route('/regalfach/<int:id>')
 def regalfach_detail(id):
     fach = Regalfach.query.get_or_404(id)

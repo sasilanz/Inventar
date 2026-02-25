@@ -2,7 +2,7 @@ import io
 import qrcode
 from flask import Blueprint, send_file, render_template, request
 from app.models.inventar import Ding
-from app.models.standort import Behaelter, Regalfach, Raum
+from app.models.standort import Behaelter, Regalfach, Raum, Gestell
 
 qr_bp = Blueprint('qr', __name__)
 
@@ -19,7 +19,8 @@ def _make_qr(url):
 
 
 def _base(req):
-    return req.host_url.rstrip('/')
+    from flask import current_app
+    return current_app.config['QR_BASE_URL'] or req.host_url.rstrip('/')
 
 
 # ── QR-Code-Bilder ─────────────────────────────────────────────────────────
@@ -34,6 +35,12 @@ def ding_qr(id):
 def behaelter_qr(id):
     Behaelter.query.get_or_404(id)
     return send_file(_make_qr(f'{_base(request)}/standort/behaelter/{id}'), mimetype='image/png')
+
+
+@qr_bp.route('/gestell/<int:id>.png')
+def gestell_qr(id):
+    Gestell.query.get_or_404(id)
+    return send_file(_make_qr(f'{_base(request)}/standort/gestelle/{id}'), mimetype='image/png')
 
 
 @qr_bp.route('/regalfach/<int:id>.png')
