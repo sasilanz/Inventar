@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+{% block title %}{{ ding.name }}{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1>{{ ding.name }}</h1>
+    {% if ding.beschreibung %}
+      <p class="text-muted">{{ ding.beschreibung }}</p>
+    {% endif %}
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('ding.bearbeiten', id=ding.id) }}" class="btn btn-outline-secondary">
+      <i class="bi bi-pencil"></i> Bearbeiten
+    </a>
+    <a href="{{ url_for('qr.ding_label', id=ding.id) }}" class="btn btn-outline-secondary">
+      <i class="bi bi-qr-code"></i> QR
+    </a>
+    <form method="post" action="{{ url_for('ding.loeschen', id=ding.id) }}"
+          onsubmit="return confirm('„{{ ding.name }}" wirklich löschen?')">
+      <button class="btn btn-outline-danger"><i class="bi bi-trash"></i></button>
+    </form>
+  </div>
+</div>
+
+<div class="row g-3">
+
+  {# Standort #}
+  <div class="col-12 col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-geo-alt"></i> Standort</div>
+      <div class="card-body">
+        {% if ding.behaelter %}
+          <div><strong>Behälter:</strong> {{ ding.behaelter.name }}
+            {% if ding.behaelter.typ %}<small class="text-muted">({{ ding.behaelter.typ }})</small>{% endif %}
+          </div>
+          {% if ding.behaelter.regalfach %}
+            <div class="text-muted small mt-1">
+              {{ ding.behaelter.regalfach.gestell.raum.zone.name }} →
+              {{ ding.behaelter.regalfach.gestell.raum.name }} →
+              {{ ding.behaelter.regalfach.gestell.name }} →
+              {{ ding.behaelter.regalfach.bezeichnung }}
+            </div>
+          {% endif %}
+        {% elif ding.regalfach %}
+          <div>
+            {{ ding.regalfach.gestell.raum.zone.name }} →
+            {{ ding.regalfach.gestell.raum.name }} →
+            {{ ding.regalfach.gestell.name }} →
+            <strong>{{ ding.regalfach.bezeichnung }}</strong>
+          </div>
+        {% elif ding.gestell %}
+          <div>
+            {{ ding.gestell.raum.zone.name }} →
+            {{ ding.gestell.raum.name }} →
+            <strong>{{ ding.gestell.name }}</strong>
+            <small class="text-muted">(direkt im Gestell)</small>
+          </div>
+        {% elif ding.raum %}
+          <div>
+            {{ ding.raum.zone.name }} → <strong>{{ ding.raum.name }}</strong>
+            <small class="text-muted">(frei im Raum)</small>
+          </div>
+        {% else %}
+          <span class="text-warning">Kein Standort erfasst.</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# Klassifikation #}
+  <div class="col-12 col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-tag"></i> Klassifikation</div>
+      <div class="card-body">
+        {% if ding.kategorie %}
+          <div><strong>Kategorie:</strong>
+            <span class="badge bg-primary">{{ ding.kategorie.name }}</span>
+          </div>
+        {% endif %}
+        {% if ding.tags %}
+          <div class="mt-2">
+            {% for tag in ding.tags %}
+              <span class="badge bg-secondary">{{ tag.name }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+        {% if not ding.kategorie and not ding.tags %}
+          <span class="text-muted">Keine Klassifikation.</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# Gerätedaten #}
+  {% if ding.hersteller or ding.modell or ding.seriennummer %}
+  <div class="col-12 col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-cpu"></i> Gerätedaten</div>
+      <div class="card-body">
+        {% if ding.hersteller %}<div><strong>Hersteller:</strong> {{ ding.hersteller }}</div>{% endif %}
+        {% if ding.modell %}<div><strong>Modell:</strong> {{ ding.modell }}</div>{% endif %}
+        {% if ding.seriennummer %}<div><strong>Seriennummer:</strong> {{ ding.seriennummer }}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# Versicherung #}
+  {% if ding.kaufpreis or ding.kaufdatum or ding.versichert_bei or ding.garantie_bis %}
+  <div class="col-12 col-md-6">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-shield-check"></i> Versicherung & Kauf</div>
+      <div class="card-body">
+        {% if ding.kaufdatum %}<div><strong>Kaufdatum:</strong> {{ ding.kaufdatum }}</div>{% endif %}
+        {% if ding.kaufpreis %}<div><strong>Kaufpreis:</strong> {{ ding.kaufpreis }} {{ ding.waehrung }}</div>{% endif %}
+        {% if ding.garantie_bis %}<div><strong>Garantie bis:</strong> {{ ding.garantie_bis }}</div>{% endif %}
+        {% if ding.versichert_bei %}<div><strong>Versichert bei:</strong> {{ ding.versichert_bei }}</div>{% endif %}
+        {% if ding.versicherungsnummer %}<div><strong>Vertragsnr.:</strong> {{ ding.versicherungsnummer }}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# Verleih #}
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-person-check"></i> Verleih</span>
+      </div>
+      <div class="card-body">
+        {% if ding.ist_ausgeliehen %}
+          {% for v in ding.verleih_eintraege if v.ist_offen %}
+          <div class="alert alert-warning mb-2">
+            Ausgeliehen an <strong>{{ v.person }}</strong>
+            seit {{ v.ausgeliehen_am }}
+            {% if v.faellig_am %} – fällig am {{ v.faellig_am }}{% endif %}
+            <form method="post" action="{{ url_for('verleih.zurueck', id=v.id) }}" class="d-inline ms-3">
+              <button class="btn btn-sm btn-success">Zurückgegeben</button>
+            </form>
+          </div>
+          {% endfor %}
+        {% else %}
+          <form method="post" action="{{ url_for('verleih.neu', ding_id=ding.id) }}" class="row g-2">
+            <div class="col-12 col-md-3">
+              <input type="text" name="person" class="form-control" placeholder="An wen?" required>
+            </div>
+            <div class="col-6 col-md-2">
+              <input type="date" name="ausgeliehen_am" class="form-control"
+                     value="{{ '' }}">
+            </div>
+            <div class="col-6 col-md-2">
+              <input type="date" name="faellig_am" class="form-control" placeholder="Fällig am">
+            </div>
+            <div class="col-12 col-md-3">
+              <input type="text" name="notiz" class="form-control" placeholder="Notiz (optional)">
+            </div>
+            <div class="col-12 col-md-2">
+              <button class="btn btn-outline-primary w-100">Ausleihen</button>
+            </div>
+          </form>
+        {% endif %}
+
+        {% set alte = ding.verleih_eintraege | selectattr('ist_offen', 'equalto', false) | list %}
+        {% if alte %}
+        <details class="mt-2">
+          <summary class="text-muted small">{{ alte|length }} frühere Ausleihe(n)</summary>
+          <ul class="list-unstyled mt-2 small">
+            {% for v in alte %}
+            <li class="text-muted">{{ v.person }} · {{ v.ausgeliehen_am }} – {{ v.zurueck_am }}</li>
+            {% endfor %}
+          </ul>
+        </details>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# Medien #}
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-images"></i> Medien</div>
+      <div class="card-body">
+
+        {# Vorhandene Medien anzeigen #}
+        {% if ding.medien %}
+        <div class="row g-2 mb-3">
+          {% for m in ding.medien %}
+          <div class="col-6 col-md-3">
+            <div class="card h-100">
+              {% if m.pfad %}
+                {% if m.dateiname and m.dateiname.rsplit('.',1)[-1].lower() in ['jpg','jpeg','png','gif','webp'] %}
+                  <a href="{{ url_for('media.datei', medium_id=m.id) }}" target="_blank">
+                    <img src="{{ url_for('media.datei', medium_id=m.id) }}"
+                         class="card-img-top" style="object-fit:cover;height:120px;">
+                  </a>
+                {% else %}
+                  <a href="{{ url_for('media.datei', medium_id=m.id) }}" target="_blank"
+                     class="d-flex align-items-center justify-content-center bg-light"
+                     style="height:120px; text-decoration:none;">
+                    <i class="bi bi-file-earmark-pdf fs-1 text-danger"></i>
+                  </a>
+                {% endif %}
+              {% elif m.url %}
+                <a href="{{ m.url }}" target="_blank"
+                   class="d-flex align-items-center justify-content-center bg-light"
+                   style="height:120px; text-decoration:none;">
+                  <i class="bi bi-link-45deg fs-1 text-primary"></i>
+                </a>
+              {% endif %}
+              <div class="card-body p-2">
+                <div class="small"><span class="badge bg-secondary">{{ m.typ }}</span></div>
+                {% if m.beschreibung %}
+                  <div class="small text-muted mt-1">{{ m.beschreibung }}</div>
+                {% endif %}
+              </div>
+              <div class="card-footer p-1 text-end">
+                <form method="post" action="{{ url_for('media.loeschen', medium_id=m.id) }}"
+                      onsubmit="return confirm('Medium löschen?')">
+                  <button class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {# Upload-Formular #}
+        <form method="post" action="{{ url_for('media.upload', ding_id=ding.id) }}"
+              enctype="multipart/form-data" class="row g-2 align-items-end border-top pt-3">
+          <div class="col-12 col-md-2">
+            <label class="form-label">Typ</label>
+            <select name="typ" class="form-select">
+              <option value="foto">Foto</option>
+              <option value="beleg">Beleg</option>
+              <option value="anleitung">Anleitung</option>
+              <option value="link">Link</option>
+              <option value="sonstiges">Sonstiges</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label">Datei hochladen</label>
+            <input type="file" name="datei" class="form-control"
+                   accept="image/*,.pdf">
+          </div>
+          <div class="col-12 col-md-3">
+            <label class="form-label">Oder: externer Link</label>
+            <input type="url" name="url" class="form-control" placeholder="https://...">
+          </div>
+          <div class="col-12 col-md-2">
+            <label class="form-label">Beschreibung</label>
+            <input type="text" name="beschreibung" class="form-control" placeholder="optional">
+          </div>
+          <div class="col-12 col-md-1">
+            <button class="btn btn-outline-primary w-100">
+              <i class="bi bi-upload"></i>
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Regalfächer{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1>Regalfächer</h1>
+  <a href="{{ url_for('standort.regalfach_neu') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle"></i> Neues Fach
+  </a>
+</div>
+
+<div class="list-group">
+  {% for fach in regalfaecher %}
+  <div class="list-group-item d-flex justify-content-between align-items-center">
+    <div>
+      <span class="badge bg-secondary me-2">{{ fach.gestell.raum.zone.name }} / {{ fach.gestell.raum.name }} / {{ fach.gestell.name }}</span>
+      <strong>{{ fach.bezeichnung }}</strong>
+      <small class="text-muted ms-1">Pos. {{ fach.position_index }}</small>
+    </div>
+    <div class="d-flex gap-1">
+      <a href="{{ url_for('standort.regalfach_bearbeiten', id=fach.id) }}"
+         class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-pencil"></i>
+      </a>
+      <form method="post" action="{{ url_for('standort.regalfach_loeschen', id=fach.id) }}"
+            onsubmit="return confirm('Regalfach „{{ fach.bezeichnung }}" wirklich löschen?')">
+        <button class="btn btn-sm btn-outline-danger">
+          <i class="bi bi-trash"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="list-group-item text-muted">Noch keine Regalfächer erfasst.</div>
+  {% endfor %}
+</div>
+{% endblock %}

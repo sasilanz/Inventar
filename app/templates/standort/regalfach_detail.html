@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}{{ fach.bezeichnung }} – {{ fach.gestell.name }}{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1><i class="bi bi-bookshelf"></i> {{ fach.bezeichnung }}</h1>
+    <p class="text-muted mb-0">
+      {{ fach.gestell.raum.zone.name }} /
+      {{ fach.gestell.raum.name }} /
+      {{ fach.gestell.name }}
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('qr.regalfach_qr', id=fach.id) }}" target="_blank"
+       class="btn btn-outline-secondary">
+      <i class="bi bi-qr-code"></i> QR
+    </a>
+    <a href="{{ url_for('standort.regalfach_bearbeiten', id=fach.id) }}"
+       class="btn btn-outline-secondary">
+      <i class="bi bi-pencil"></i>
+    </a>
+  </div>
+</div>
+
+{# QR-Code #}
+<div class="mb-4">
+  <img src="{{ url_for('qr.regalfach_qr', id=fach.id) }}"
+       width="140" height="140" alt="QR-Code">
+  <p class="text-muted small mt-1">Scannen → direkt diese Seite</p>
+</div>
+
+{# Behälter im Fach #}
+{% if fach.behaelter %}
+<h5>Behälter <span class="badge bg-secondary">{{ fach.behaelter|length }}</span></h5>
+<div class="list-group mb-4">
+  {% for b in fach.behaelter | sort(attribute='name') %}
+  <a href="{{ url_for('standort.behaelter_detail', id=b.id) }}"
+     class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+    <div>
+      <i class="bi bi-box-seam me-2 text-muted"></i>
+      <span class="fw-bold">{{ b.name }}</span>
+      {% if b.typ %}<small class="text-muted ms-1">({{ b.typ }})</small>{% endif %}
+      <span class="badge bg-light text-dark ms-2">{{ b.dinge|length }} Dinge</span>
+    </div>
+    <i class="bi bi-chevron-right text-muted"></i>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{# Dinge direkt im Fach #}
+{% if fach.dinge %}
+<h5>Dinge direkt im Fach <span class="badge bg-secondary">{{ fach.dinge|length }}</span></h5>
+<div class="list-group">
+  {% for ding in fach.dinge | sort(attribute='name') %}
+  <a href="{{ url_for('ding.detail', id=ding.id) }}"
+     class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+    <div>
+      <span class="fw-bold">{{ ding.name }}</span>
+      {% if ding.kategorie %}
+        <span class="badge bg-primary ms-2">{{ ding.kategorie.name }}</span>
+      {% endif %}
+    </div>
+    <i class="bi bi-chevron-right text-muted"></i>
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if not fach.behaelter and not fach.dinge %}
+<p class="text-muted">Dieses Regalfach ist leer.</p>
+{% endif %}
+
+{% endblock %}

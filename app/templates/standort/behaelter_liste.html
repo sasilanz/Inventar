@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Behälter{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1>Behälter</h1>
+  <a href="{{ url_for('standort.behaelter_neu') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle"></i> Neuer Behälter
+  </a>
+</div>
+
+<div class="list-group">
+  {% for b in behaelter %}
+  <div class="list-group-item d-flex justify-content-between align-items-center">
+    <div>
+      {% if b.regalfach %}
+        <span class="badge bg-secondary me-2">
+          {{ b.regalfach.gestell.raum.zone.name }} / {{ b.regalfach.gestell.raum.name }} /
+          {{ b.regalfach.gestell.name }} / {{ b.regalfach.bezeichnung }}
+        </span>
+      {% elif b.gestell %}
+        <span class="badge bg-secondary me-2">
+          {{ b.gestell.raum.zone.name }} / {{ b.gestell.raum.name }} / {{ b.gestell.name }}
+        </span>
+      {% elif b.raum %}
+        <span class="badge bg-secondary me-2">{{ b.raum.zone.name }} / {{ b.raum.name }}</span>
+      {% endif %}
+      <strong>{{ b.name }}</strong>
+      {% if b.typ %}
+        <small class="text-muted ms-1">({{ b.typ }})</small>
+      {% endif %}
+      <span class="badge bg-light text-dark ms-2">{{ b.dinge|length }} Dinge</span>
+    </div>
+    <div class="d-flex gap-1">
+      <a href="{{ url_for('standort.behaelter_detail', id=b.id) }}"
+         class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-box-arrow-in-right"></i>
+      </a>
+      <a href="{{ url_for('standort.behaelter_bearbeiten', id=b.id) }}"
+         class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-pencil"></i>
+      </a>
+      <form method="post" action="{{ url_for('standort.behaelter_loeschen', id=b.id) }}"
+            onsubmit="return confirm('Behälter „{{ b.name }}" wirklich löschen?')">
+        <button class="btn btn-sm btn-outline-danger">
+          <i class="bi bi-trash"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="list-group-item text-muted">Noch keine Behälter erfasst.</div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Ding bearbeiten' if ding else 'Neues Ding' }}{% endblock %}
+{% block content %}
+<h1>{{ 'Ding bearbeiten' if ding else 'Neues Ding' }}</h1>
+
+<form method="post" class="mt-3">
+  <div class="row g-3">
+
+    {# Basis #}
+    <div class="col-12">
+      <h5 class="border-bottom pb-1">Grunddaten</h5>
+    </div>
+    <div class="col-12 col-md-6">
+      <label class="form-label">Name *</label>
+      <input type="text" name="name" class="form-control" required
+             value="{{ ding.name if ding else '' }}">
+    </div>
+    <div class="col-12">
+      <label class="form-label">Beschreibung</label>
+      <textarea name="beschreibung" class="form-control" rows="2">{{ ding.beschreibung if ding else '' }}</textarea>
+    </div>
+
+    {# Standort #}
+    <div class="col-12 mt-2">
+      <h5 class="border-bottom pb-1">Standort <small class="text-muted fw-normal">(eines auswählen)</small></h5>
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label">In Behälter</label>
+      <select name="behaelter_id" class="form-select">
+        <option value="">– kein –</option>
+        {% for b in behaelter %}
+        <option value="{{ b.id }}" {{ 'selected' if ding and ding.behaelter_id == b.id }}>
+          {{ b.name }}
+          {% if b.regalfach %} · {{ b.regalfach.gestell.name }}{% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label">Direkt im Gestell</label>
+      <select name="gestell_id" class="form-select">
+        <option value="">– kein –</option>
+        {% for g in gestelle %}
+        <option value="{{ g.id }}" {{ 'selected' if ding and ding.gestell_id == g.id }}>
+          {{ g.raum.name }} / {{ g.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label">In Regalfach</label>
+      <select name="regalfach_id" class="form-select">
+        <option value="">– kein –</option>
+        {% for f in regalfaecher %}
+        <option value="{{ f.id }}" {{ 'selected' if ding and ding.regalfach_id == f.id }}>
+          {{ f.gestell.raum.name }} / {{ f.gestell.name }} / {{ f.bezeichnung }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label">Frei im Raum</label>
+      <select name="raum_id" class="form-select">
+        <option value="">– kein –</option>
+        {% for r in raeume %}
+        <option value="{{ r.id }}" {{ 'selected' if ding and ding.raum_id == r.id }}>
+          {{ r.zone.name }} / {{ r.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    {# Klassifikation #}
+    <div class="col-12 mt-2">
+      <h5 class="border-bottom pb-1">Klassifikation</h5>
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label">Kategorie</label>
+      <select name="kategorie_id" class="form-select">
+        <option value="">– keine –</option>
+        {% for k in kategorien %}
+        <option value="{{ k.id }}" {{ 'selected' if ding and ding.kategorie_id == k.id }}>
+          {{ k.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-8">
+      <label class="form-label">Tags</label>
+      <div class="d-flex flex-wrap gap-2">
+        {% for tag in alle_tags %}
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="tag_ids"
+                 value="{{ tag.id }}" id="tag{{ tag.id }}"
+                 {{ 'checked' if ding and tag in ding.tags }}>
+          <label class="form-check-label" for="tag{{ tag.id }}">{{ tag.name }}</label>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# Gerätedaten #}
+    <div class="col-12 mt-2">
+      <h5 class="border-bottom pb-1">Gerätedaten <small class="text-muted fw-normal">(optional)</small></h5>
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label">Hersteller</label>
+      <input type="text" name="hersteller" class="form-control"
+             value="{{ ding.hersteller if ding else '' }}">
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label">Modell</label>
+      <input type="text" name="modell" class="form-control"
+             value="{{ ding.modell if ding else '' }}">
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label">Seriennummer</label>
+      <input type="text" name="seriennummer" class="form-control"
+             value="{{ ding.seriennummer if ding else '' }}">
+    </div>
+
+    {# Versicherung #}
+    <div class="col-12 mt-2">
+      <h5 class="border-bottom pb-1">Versicherung & Kauf <small class="text-muted fw-normal">(optional)</small></h5>
+    </div>
+    <div class="col-6 col-md-3">
+      <label class="form-label">Kaufdatum</label>
+      <input type="date" name="kaufdatum" class="form-control"
+             value="{{ ding.kaufdatum if ding else '' }}">
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label">Kaufpreis</label>
+      <input type="number" step="0.01" name="kaufpreis" class="form-control"
+             value="{{ ding.kaufpreis if ding else '' }}">
+    </div>
+    <div class="col-6 col-md-2">
+      <label class="form-label">Währung</label>
+      <select name="waehrung" class="form-select">
+        <option value="CHF" {{ 'selected' if not ding or ding.waehrung == 'CHF' }}>CHF</option>
+        <option value="EUR" {{ 'selected' if ding and ding.waehrung == 'EUR' }}>EUR</option>
+      </select>
+    </div>
+    <div class="col-6 col-md-3">
+      <label class="form-label">Garantie bis</label>
+      <input type="date" name="garantie_bis" class="form-control"
+             value="{{ ding.garantie_bis if ding else '' }}">
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label">Versichert bei</label>
+      <input type="text" name="versichert_bei" class="form-control"
+             value="{{ ding.versichert_bei if ding else '' }}">
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label">Versicherungsnummer</label>
+      <input type="text" name="versicherungsnummer" class="form-control"
+             value="{{ ding.versicherungsnummer if ding else '' }}">
+    </div>
+
+    <div class="col-12 mt-2">
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Speichern</button>
+        {% if ding %}
+          <a href="{{ url_for('ding.detail', id=ding.id) }}" class="btn btn-outline-secondary">Abbrechen</a>
+        {% else %}
+          <a href="{{ url_for('ding.liste') }}" class="btn btn-outline-secondary">Abbrechen</a>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</form>
+{% endblock %}

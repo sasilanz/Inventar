@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Tags{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1>Tags</h1>
+  <a href="{{ url_for('stammdaten.tag_neu') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle"></i> Neuer Tag
+  </a>
+</div>
+
+<div class="list-group">
+  {% for t in tags %}
+  <div class="list-group-item d-flex justify-content-between align-items-center">
+    <div>
+      <span class="badge bg-secondary me-2">{{ t.name }}</span>
+      <small class="text-muted">{{ t.dinge|length }} Dinge</small>
+    </div>
+    <div class="d-flex gap-1">
+      <a href="{{ url_for('stammdaten.tag_bearbeiten', id=t.id) }}"
+         class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-pencil"></i>
+      </a>
+      <form method="post" action="{{ url_for('stammdaten.tag_loeschen', id=t.id) }}"
+            onsubmit="return confirm('Tag „{{ t.name }}" löschen?')">
+        <button class="btn btn-sm btn-outline-danger">
+          <i class="bi bi-trash"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="list-group-item text-muted">Noch keine Tags.</div>
+  {% endfor %}
+</div>
+{% endblock %}

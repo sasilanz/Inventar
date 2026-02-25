@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Räume{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1>Räume</h1>
+  <a href="{{ url_for('standort.raum_neu') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle"></i> Neuer Raum
+  </a>
+</div>
+
+<div class="list-group">
+  {% for raum in raeume %}
+  <div class="list-group-item d-flex justify-content-between align-items-center">
+    <div>
+      <span class="badge bg-secondary me-2">{{ raum.zone.name }}</span>
+      <strong>{{ raum.name }}</strong>
+      {% if raum.beschreibung %}
+        <small class="text-muted ms-2">{{ raum.beschreibung }}</small>
+      {% endif %}
+    </div>
+    <div class="d-flex gap-1">
+      <a href="{{ url_for('standort.raum_detail', id=raum.id) }}"
+         class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-box-arrow-in-right"></i>
+      </a>
+      <a href="{{ url_for('standort.raum_bearbeiten', id=raum.id) }}"
+         class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-pencil"></i>
+      </a>
+      <form method="post" action="{{ url_for('standort.raum_loeschen', id=raum.id) }}"
+            onsubmit="return confirm('Raum „{{ raum.name }}" wirklich löschen?')">
+        <button class="btn btn-sm btn-outline-danger">
+          <i class="bi bi-trash"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="list-group-item text-muted">Noch keine Räume erfasst.</div>
+  {% endfor %}
+</div>
+{% endblock %}

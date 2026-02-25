@@ -1,0 +1,40 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: inventardb-db
+    environment:
+      POSTGRES_DB: inventardb
+      POSTGRES_USER: inventardb
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - inventardb-pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inventardb -d inventardb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: inventardb-app
+    ports:
+      - "0.0.0.0:5000:5000"
+    environment:
+      DATABASE_URL: postgresql://inventardb:${POSTGRES_PASSWORD}@db:5432/inventardb
+      SECRET_KEY: ${SECRET_KEY}
+      FLASK_APP: run.py
+      FLASK_ENV: development
+      FLASK_DEBUG: "1"
+    volumes:
+      - .:/app                              # Hot-Reload: Codeänderungen sofort sichtbar
+      - inventardb-media:/app/app/media     # Medien-Volume
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  inventardb-pgdata:
+  inventardb-media:

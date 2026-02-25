@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Behälter bearbeiten' if behaelter else 'Neuer Behälter' }}{% endblock %}
+{% block content %}
+<h1>{{ 'Behälter bearbeiten' if behaelter else 'Neuer Behälter' }}</h1>
+
+<form method="post" class="mt-3" style="max-width:520px">
+
+  <div class="mb-3">
+    <label class="form-label">Name *</label>
+    <input type="text" name="name" class="form-control" required
+           value="{{ behaelter.name if behaelter else '' }}">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Typ</label>
+    <input type="text" name="typ" class="form-control" placeholder="z.B. Box, Kiste, Schublade"
+           value="{{ behaelter.typ if behaelter else '' }}">
+  </div>
+
+  {# Standort-Wahl via Radio #}
+  <div class="mb-3">
+    <label class="form-label">Standort *</label>
+    <div class="d-flex gap-3 mb-2">
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="standort_typ" id="st_gestell"
+               value="gestell" onchange="zeigeStandort(this.value)"
+               {{ 'checked' if (behaelter and behaelter.gestell_id) or (not behaelter) }}>
+        <label class="form-check-label" for="st_gestell">In Gestell</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="standort_typ" id="st_regalfach"
+               value="regalfach" onchange="zeigeStandort(this.value)"
+               {{ 'checked' if behaelter and behaelter.regalfach_id }}>
+        <label class="form-check-label" for="st_regalfach">In Regalfach</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="standort_typ" id="st_raum"
+               value="raum" onchange="zeigeStandort(this.value)"
+               {{ 'checked' if behaelter and behaelter.raum_id and not behaelter.gestell_id and not behaelter.regalfach_id }}>
+        <label class="form-check-label" for="st_raum">Frei im Raum</label>
+      </div>
+    </div>
+
+    <div id="div_gestell">
+      <select name="gestell_id" class="form-select">
+        <option value="">– Gestell wählen –</option>
+        {% for gestell in gestelle %}
+        <option value="{{ gestell.id }}"
+          {{ 'selected' if behaelter and behaelter.gestell_id == gestell.id }}>
+          {{ gestell.raum.zone.name }} / {{ gestell.raum.name }} / {{ gestell.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div id="div_regalfach" style="display:none">
+      <select name="regalfach_id" class="form-select">
+        <option value="">– Regalfach wählen –</option>
+        {% for fach in regalfaecher %}
+        <option value="{{ fach.id }}"
+          {{ 'selected' if behaelter and behaelter.regalfach_id == fach.id }}>
+          {{ fach.gestell.raum.zone.name }} / {{ fach.gestell.raum.name }} / {{ fach.gestell.name }} / {{ fach.bezeichnung }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div id="div_raum" style="display:none">
+      <select name="raum_id" class="form-select">
+        <option value="">– Raum wählen –</option>
+        {% for raum in raeume %}
+        <option value="{{ raum.id }}"
+          {{ 'selected' if behaelter and behaelter.raum_id == raum.id }}>
+          {{ raum.zone.name }} / {{ raum.name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Beschreibung</label>
+    <textarea name="beschreibung" class="form-control" rows="2">{{ behaelter.beschreibung if behaelter else '' }}</textarea>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Speichern</button>
+    <a href="{{ url_for('standort.behaelter_liste') }}" class="btn btn-outline-secondary">Abbrechen</a>
+  </div>
+</form>
+
+<script>
+function zeigeStandort(wahl) {
+  document.getElementById('div_gestell').style.display  = wahl === 'gestell'   ? '' : 'none';
+  document.getElementById('div_regalfach').style.display = wahl === 'regalfach' ? '' : 'none';
+  document.getElementById('div_raum').style.display     = wahl === 'raum'      ? '' : 'none';
+}
+// Beim Laden: richtigen Block anzeigen
+document.addEventListener('DOMContentLoaded', function() {
+  var checked = document.querySelector('input[name="standort_typ"]:checked');
+  if (checked) zeigeStandort(checked.value);
+});
+</script>
+{% endblock %}

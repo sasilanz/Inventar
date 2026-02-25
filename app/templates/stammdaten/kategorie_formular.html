@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Kategorie bearbeiten' if kategorie else 'Neue Kategorie' }}{% endblock %}
+{% block content %}
+<h1>{{ 'Kategorie bearbeiten' if kategorie else 'Neue Kategorie' }}</h1>
+
+<form method="post" class="mt-3" style="max-width:400px">
+  <div class="mb-3">
+    <label class="form-label">Name *</label>
+    <input type="text" name="name" class="form-control" required
+           value="{{ kategorie.name if kategorie else '' }}">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Beschreibung</label>
+    <input type="text" name="beschreibung" class="form-control"
+           value="{{ kategorie.beschreibung if kategorie else '' }}">
+  </div>
+  <div class="d-flex gap-2">
+    <button type="submit" class="btn btn-primary">Speichern</button>
+    <a href="{{ url_for('stammdaten.kategorie_liste') }}" class="btn btn-outline-secondary">Abbrechen</a>
+  </div>
+</form>
+{% endblock %}

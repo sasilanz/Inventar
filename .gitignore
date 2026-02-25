@@ -1,0 +1,29 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+
+# Uploads & Backups
+app/media/
+backups/
+
+# Datenbank-Altlasten
+keller.db
+migrate_keller.py
+
+# Caddy (temporär gewesen)
+caddy-root.crt
+Caddyfile
+
+# Migrations-Cache
+migrations/__pycache__/
+
+# Editor
+.vscode/
+.idea/
+*.swp

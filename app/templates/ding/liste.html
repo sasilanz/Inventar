@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Dinge{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1><i class="bi bi-box2"></i> Dinge <span class="badge bg-secondary">{{ dinge|length }}</span></h1>
+  <a href="{{ url_for('ding.neu') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle"></i> Neues Ding
+  </a>
+</div>
+
+{# Suchzeile #}
+<form class="row g-2 mb-3" method="get">
+  <div class="col-12 col-md-5">
+    <input type="search" name="q" class="form-control" placeholder="Suchen..."
+           value="{{ q }}">
+  </div>
+  <div class="col-6 col-md-3">
+    <select name="kategorie_id" class="form-select">
+      <option value="">Alle Kategorien</option>
+      {% for k in kategorien %}
+      <option value="{{ k.id }}" {{ 'selected' if k.id == kategorie_id }}>{{ k.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-6 col-md-3">
+    <select name="tag_id" class="form-select">
+      <option value="">Alle Tags</option>
+      {% for t in tags %}
+      <option value="{{ t.id }}" {{ 'selected' if t.id == tag_id }}>{{ t.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-12 col-md-1">
+    <button class="btn btn-outline-secondary w-100" type="submit">
+      <i class="bi bi-search"></i>
+    </button>
+  </div>
+</form>
+
+<div class="list-group">
+  {% for ding in dinge %}
+  <a href="{{ url_for('ding.detail', id=ding.id) }}"
+     class="list-group-item list-group-item-action d-flex justify-content-between align-items-start">
+    <div>
+      <div class="fw-bold">{{ ding.name }}</div>
+      <small class="text-muted">
+        {% if ding.behaelter %}
+          <i class="bi bi-box-seam"></i> {{ ding.behaelter.name }}
+          {% if ding.behaelter.regalfach %}
+            · {{ ding.behaelter.regalfach.gestell.raum.zone.name }} /
+            {{ ding.behaelter.regalfach.gestell.raum.name }} /
+            {{ ding.behaelter.regalfach.gestell.name }}
+          {% endif %}
+        {% elif ding.regalfach %}
+          <i class="bi bi-bookshelf"></i>
+          {{ ding.regalfach.gestell.raum.zone.name }} /
+          {{ ding.regalfach.gestell.raum.name }} /
+          {{ ding.regalfach.gestell.name }} /
+          {{ ding.regalfach.bezeichnung }}
+        {% elif ding.raum %}
+          <i class="bi bi-door-open"></i>
+          {{ ding.raum.zone.name }} / {{ ding.raum.name }}
+        {% else %}
+          <span class="text-warning">Kein Standort</span>
+        {% endif %}
+      </small>
+      <div class="mt-1">
+        {% if ding.kategorie %}
+          <span class="badge bg-primary">{{ ding.kategorie.name }}</span>
+        {% endif %}
+        {% for tag in ding.tags %}
+          <span class="badge bg-secondary">{{ tag.name }}</span>
+        {% endfor %}
+        {% if ding.ist_ausgeliehen %}
+          <span class="badge bg-warning text-dark"><i class="bi bi-person"></i> ausgeliehen</span>
+        {% endif %}
+      </div>
+    </div>
+    <i class="bi bi-chevron-right text-muted mt-1"></i>
+  </a>
+  {% else %}
+  <div class="list-group-item text-muted">
+    {% if q or kategorie_id or tag_id %}
+      Keine Dinge gefunden.
+    {% else %}
+      Noch keine Dinge erfasst.
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

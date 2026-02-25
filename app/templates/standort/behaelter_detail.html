@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}{{ behaelter.name }}{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h1><i class="bi bi-box-seam"></i> {{ behaelter.name }}</h1>
+    <p class="text-muted mb-0">
+      {% if behaelter.typ %}{{ behaelter.typ }} · {% endif %}
+      {% if behaelter.regalfach %}
+        {{ behaelter.regalfach.gestell.raum.zone.name }} /
+        {{ behaelter.regalfach.gestell.raum.name }} /
+        {{ behaelter.regalfach.gestell.name }} /
+        {{ behaelter.regalfach.bezeichnung }}
+      {% elif behaelter.gestell %}
+        {{ behaelter.gestell.raum.zone.name }} /
+        {{ behaelter.gestell.raum.name }} /
+        {{ behaelter.gestell.name }}
+      {% elif behaelter.raum %}
+        {{ behaelter.raum.zone.name }} / {{ behaelter.raum.name }}
+      {% endif %}
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('qr.behaelter_qr', id=behaelter.id) }}" target="_blank"
+       class="btn btn-outline-secondary">
+      <i class="bi bi-qr-code"></i> QR
+    </a>
+    <a href="{{ url_for('standort.behaelter_bearbeiten', id=behaelter.id) }}"
+       class="btn btn-outline-secondary">
+      <i class="bi bi-pencil"></i>
+    </a>
+  </div>
+</div>
+
+{# QR-Code anzeigen #}
+<div class="mb-4">
+  <img src="{{ url_for('qr.behaelter_qr', id=behaelter.id) }}"
+       width="140" height="140" alt="QR-Code">
+  <p class="text-muted small mt-1">Scannen → direkt diese Seite</p>
+</div>
+
+{# Inhalt #}
+<h5>Inhalt <span class="badge bg-secondary">{{ behaelter.dinge|length }}</span></h5>
+
+{% if behaelter.dinge %}
+<div class="list-group">
+  {% for ding in behaelter.dinge | sort(attribute='name') %}
+  <a href="{{ url_for('ding.detail', id=ding.id) }}"
+     class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+    <div>
+      <span class="fw-bold">{{ ding.name }}</span>
+      {% if ding.beschreibung %}
+        <small class="text-muted ms-2">{{ ding.beschreibung }}</small>
+      {% endif %}
+      <div class="mt-1">
+        {% if ding.kategorie %}
+          <span class="badge bg-primary">{{ ding.kategorie.name }}</span>
+        {% endif %}
+        {% for tag in ding.tags %}
+          <span class="badge bg-secondary">{{ tag.name }}</span>
+        {% endfor %}
+        {% if ding.ist_ausgeliehen %}
+          <span class="badge bg-warning text-dark"><i class="bi bi-person"></i> ausgeliehen</span>
+        {% endif %}
+      </div>
+    </div>
+    <i class="bi bi-chevron-right text-muted"></i>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<p class="text-muted">Dieser Behälter ist leer.</p>
+{% endif %}
+
+{% endblock %}
