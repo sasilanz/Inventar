@@ -81,7 +81,9 @@
           <select name="regalfach_id" id="sel_regalfach" class="form-select">
             <option value="">– Regalfach: alle –</option>
             {% for f in regalfaecher %}
-            <option value="{{ f.id }}" data-gestell="{{ f.gestell_id }}"
+            <option value="{{ f.id }}"
+                    data-gestell="{{ f.gestell_id }}"
+                    data-raum="{{ f.gestell.raum_id }}"
                     {{ 'selected' if f.id == regalfach_id }}>
               {{ f.gestell.name }} / {{ f.bezeichnung }}
             </option>
@@ -93,10 +95,23 @@
           <select name="behaelter_id" id="sel_behaelter" class="form-select">
             <option value="">– Behälter: alle –</option>
             {% for b in behaelter %}
+            {%- if b.regalfach_id %}
+              {%- set b_gestell = b.regalfach.gestell_id | string %}
+              {%- set b_raum    = b.regalfach.gestell.raum_id | string %}
+              {%- set b_rfach   = b.regalfach_id | string %}
+            {%- elif b.gestell_id %}
+              {%- set b_gestell = b.gestell_id | string %}
+              {%- set b_raum    = b.gestell.raum_id | string %}
+              {%- set b_rfach   = '' %}
+            {%- else %}
+              {%- set b_gestell = '' %}
+              {%- set b_raum    = b.raum_id | string if b.raum_id else '' %}
+              {%- set b_rfach   = '' %}
+            {%- endif %}
             <option value="{{ b.id }}"
-                    data-regalfach="{{ b.regalfach_id or '' }}"
-                    data-gestell="{{ b.gestell_id or '' }}"
-                    data-raum="{{ b.raum_id or '' }}"
+                    data-regalfach="{{ b_rfach }}"
+                    data-gestell="{{ b_gestell }}"
+                    data-raum="{{ b_raum }}"
                     {{ 'selected' if b.id == behaelter_id }}>
               {{ b.name }}{% if b.typ %} ({{ b.typ }}){% endif %}
             </option>
@@ -206,36 +221,30 @@
     if ([...select.options].some(o => o.value === current)) select.value = current;
   }
 
-  function onRaumChange() {
-    const raumId = selRaum.value;
-    filterSelect(selGestell, optsGestell, o => !raumId || o.dataset.raum === raumId);
-    onGestellChange();
-  }
-
-  function onGestellChange() {
-    const gestellId = selGestell.value;
-    filterSelect(selRegalfach, optsRegalfach, o => !gestellId || o.dataset.gestell === gestellId);
-    onRegalfachChange();
-  }
-
-  function onRegalfachChange() {
-    const regalfachId = selRegalfach.value;
-    const gestellId   = selGestell.value;
+  function cascade() {
     const raumId      = selRaum.value;
-    filterSelect(selBehaelter, optsBehaelter, o => {
-      if (regalfachId) return o.dataset.regalfach === regalfachId;
-      if (gestellId)   return o.dataset.gestell   === gestellId || o.dataset.regalfach !== '';
-      if (raumId)      return o.dataset.raum       === raumId   || o.dataset.gestell !== '' || o.dataset.regalfach !== '';
-      return true;
-    });
+    const gestellId   = selGestell.value;
+    const regalfachId = selRegalfach.value;
+
+    filterSelect(selGestell,   optsGestell,
+      o => !raumId      || o.dataset.raum    === raumId);
+
+    filterSelect(selRegalfach, optsRegalfach,
+      o => (!raumId    || o.dataset.raum    === raumId) &&
+           (!gestellId || o.dataset.gestell === gestellId));
+
+    filterSelect(selBehaelter, optsBehaelter,
+      o => (!raumId      || o.dataset.raum      === raumId) &&
+           (!gestellId   || o.dataset.gestell   === gestellId) &&
+           (!regalfachId || o.dataset.regalfach === regalfachId));
   }
 
-  selRaum.addEventListener('change', onRaumChange);
-  selGestell.addEventListener('change', onGestellChange);
-  selRegalfach.addEventListener('change', onRegalfachChange);
+  selRaum.addEventListener('change', cascade);
+  selGestell.addEventListener('change', cascade);
+  selRegalfach.addEventListener('change', cascade);
 
   // Cascade-Zustand nach Formular-Submit wiederherstellen
-  onRaumChange();
+  cascade();
 })();
 </script>
 {% endblock %}
