@@ -23,13 +23,19 @@
     <div class="collapse navbar-collapse" id="nav">
       <ul class="navbar-nav me-auto">
         <li class="nav-item">
-          <a class="nav-link" href="/ding">Dinge</a>
+          <a class="nav-link" href="/ding"><i class="bi bi-tag me-1"></i>Dinge</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/standort">Standorte</a>
+          <a class="nav-link" href="/standort"><i class="bi bi-geo-alt me-1"></i>Standorte</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/verleih">Verleih</a>
+          <a class="nav-link" href="/suchen"><i class="bi bi-search me-1"></i>Suchen</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/erfassen"><i class="bi bi-plus-circle me-1"></i>Erfassen</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/verleih"><i class="bi bi-arrow-left-right me-1"></i>Verleih</a>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
@@ -41,12 +47,6 @@
           </ul>
         </li>
       </ul>
-      <form class="d-flex" action="/suche" method="get">
-        <input class="form-control me-2" type="search" name="q" placeholder="Suchen...">
-        <button class="btn btn-outline-light" type="submit">
-          <i class="bi bi-search"></i>
-        </button>
-      </form>
     </div>
   </div>
 </nav>

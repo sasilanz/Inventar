@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% block title %}Suchen{% endblock %}
+{% block content %}
+<h1><i class="bi bi-search"></i> Suchen</h1>
+
+<form method="get" action="/suchen" class="mt-3">
+  <div class="row g-3">
+
+    {# Freitext #}
+    <div class="col-12 col-md-6">
+      <label class="form-label">Freitext</label>
+      <input type="text" name="q" class="form-control" placeholder="Name, Beschreibung, Hersteller, Modell, Seriennummer…"
+             value="{{ q }}">
+    </div>
+
+    {# Kategorie #}
+    <div class="col-12 col-md-3">
+      <label class="form-label">Kategorie</label>
+      <select name="kategorie_id" class="form-select">
+        <option value="">– alle –</option>
+        {% for k in kategorien %}
+        <option value="{{ k.id }}" {{ 'selected' if k.id == kategorie_id }}>{{ k.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    {# Ausgeliehen #}
+    <div class="col-12 col-md-3">
+      <label class="form-label">Ausgeliehen</label>
+      <select name="ausgeliehen" class="form-select">
+        <option value=""   {{ 'selected' if ausgeliehen == '' }}>egal</option>
+        <option value="ja" {{ 'selected' if ausgeliehen == 'ja' }}>ja</option>
+        <option value="nein" {{ 'selected' if ausgeliehen == 'nein' }}>nein</option>
+      </select>
+    </div>
+
+    {# Tags #}
+    <div class="col-12">
+      <label class="form-label">Tags <small class="text-muted">(Mehrfachauswahl möglich)</small></label>
+      <div class="d-flex flex-wrap gap-2">
+        {% for tag in alle_tags %}
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="tag_ids"
+                 value="{{ tag.id }}" id="stag{{ tag.id }}"
+                 {{ 'checked' if tag.id in tag_ids }}>
+          <label class="form-check-label" for="stag{{ tag.id }}">{{ tag.name }}</label>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# Standort #}
+    <div class="col-12">
+      <label class="form-label">Standort <small class="text-muted">(von allgemein nach spezifisch, nur eines nötig)</small></label>
+      <div class="row g-2">
+        <div class="col-12 col-sm-6 col-lg-3">
+          <select name="raum_id" class="form-select">
+            <option value="">– Raum: alle –</option>
+            {% for r in raeume %}
+            <option value="{{ r.id }}" {{ 'selected' if r.id == raum_id }}>
+              {{ r.zone.name }} / {{ r.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <select name="gestell_id" class="form-select">
+            <option value="">– Gestell: alle –</option>
+            {% for g in gestelle %}
+            <option value="{{ g.id }}" {{ 'selected' if g.id == gestell_id }}>
+              {{ g.raum.name }} / {{ g.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <select name="regalfach_id" class="form-select">
+            <option value="">– Regalfach: alle –</option>
+            {% for f in regalfaecher %}
+            <option value="{{ f.id }}" {{ 'selected' if f.id == regalfach_id }}>
+              {{ f.gestell.name }} / {{ f.bezeichnung }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+          <select name="behaelter_id" class="form-select">
+            <option value="">– Behälter: alle –</option>
+            {% for b in behaelter %}
+            <option value="{{ b.id }}" {{ 'selected' if b.id == behaelter_id }}>
+              {{ b.name }}{% if b.typ %} ({{ b.typ }}){% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    {# Garantie #}
+    <div class="col-12">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" name="garantie_bald"
+               value="1" id="garantie_bald" {{ 'checked' if garantie_bald }}>
+        <label class="form-check-label" for="garantie_bald">
+          Nur Dinge mit Garantie die in 90 Tagen abläuft
+        </label>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-search"></i> Suchen
+      </button>
+      <a href="/suchen" class="btn btn-outline-secondary ms-2">Zurücksetzen</a>
+    </div>
+
+  </div>
+</form>
+
+{# Ergebnisse #}
+{% if gesucht %}
+<hr class="mt-4">
+<h5 class="mb-3">
+  {{ dinge|length }} Ergebnis{{ 'se' if dinge|length != 1 }}
+</h5>
+
+{% if dinge %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Name</th>
+        <th>Kategorie</th>
+        <th>Standort</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for ding in dinge %}
+      <tr>
+        <td>
+          <a href="{{ url_for('ding.detail', id=ding.id) }}" class="fw-bold text-decoration-none">
+            {{ ding.name }}
+          </a>
+          {% if ding.tags %}
+            {% for tag in ding.tags %}
+              <span class="badge bg-secondary ms-1">{{ tag.name }}</span>
+            {% endfor %}
+          {% endif %}
+        </td>
+        <td>
+          {% if ding.kategorie %}
+            <span class="badge bg-primary">{{ ding.kategorie.name }}</span>
+          {% else %}
+            <span class="text-muted">–</span>
+          {% endif %}
+        </td>
+        <td>
+          <small class="text-muted">{{ ding.standort_beschreibung() }}</small>
+        </td>
+        <td>
+          {% if ding.ist_ausgeliehen %}
+            <span class="badge bg-warning text-dark">ausgeliehen</span>
+          {% endif %}
+          {% if ding.garantie_bis and ding.garantie_bis >= today and ding.garantie_bis <= today_90 %}
+            <span class="badge bg-danger">Garantie läuft ab</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-muted">Keine Dinge gefunden.</p>
+{% endif %}
+{% endif %}
+
+{% endblock %}
