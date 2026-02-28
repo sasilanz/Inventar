@@ -1,9 +1,23 @@
-from flask import Blueprint, redirect, url_for, flash, request
+from flask import Blueprint, redirect, url_for, flash, request, render_template
 from app import db
 from app.models.tracking import Verleih
-from datetime import datetime
+from datetime import datetime, date
 
 verleih_bp = Blueprint('verleih', __name__)
+
+
+@verleih_bp.route('/')
+def index():
+    offen = (Verleih.query
+             .filter_by(zurueck_am=None)
+             .order_by(Verleih.ausgeliehen_am)
+             .all())
+    zurueck = (Verleih.query
+               .filter(Verleih.zurueck_am != None)
+               .order_by(Verleih.zurueck_am.desc())
+               .limit(30)
+               .all())
+    return render_template('verleih/liste.html', offen=offen, zurueck=zurueck, today=date.today())
 
 
 @verleih_bp.route('/neu/<int:ding_id>', methods=['POST'])

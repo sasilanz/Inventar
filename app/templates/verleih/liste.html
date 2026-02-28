@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Verleih{% endblock %}
+{% block content %}
+
+<h1><i class="bi bi-arrow-left-right"></i> Verleih</h1>
+
+{# ── Aktuell ausgeliehen ──────────────────────────────────────────────────── #}
+<h5 class="mt-4 mb-3">
+  Aktuell ausgeliehen
+  <span class="badge {{ 'bg-danger' if offen else 'bg-secondary' }} ms-1">{{ offen|length }}</span>
+</h5>
+
+{% if offen %}
+<div class="table-responsive mb-5">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Ding</th>
+        <th>An</th>
+        <th>Seit</th>
+        <th>Fällig</th>
+        <th>Notiz</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in offen %}
+      <tr class="{{ 'table-danger' if v.faellig_am and v.faellig_am < today }}">
+        <td>
+          <a href="{{ url_for('ding.detail', id=v.ding.id) }}" class="fw-bold text-decoration-none">
+            {{ v.ding.name }}
+          </a>
+          <div class="text-muted small">{{ v.ding.standort_beschreibung() }}</div>
+        </td>
+        <td>{{ v.person }}</td>
+        <td>{{ v.ausgeliehen_am.strftime('%d.%m.%Y') }}</td>
+        <td>
+          {% if v.faellig_am %}
+            {% if v.faellig_am < today %}
+              <span class="text-danger fw-bold">{{ v.faellig_am.strftime('%d.%m.%Y') }} ⚠</span>
+            {% else %}
+              {{ v.faellig_am.strftime('%d.%m.%Y') }}
+            {% endif %}
+          {% else %}
+            <span class="text-muted">–</span>
+          {% endif %}
+        </td>
+        <td><small class="text-muted">{{ v.notiz or '' }}</small></td>
+        <td>
+          <form method="post" action="{{ url_for('verleih.zurueck', id=v.id) }}">
+            <button class="btn btn-sm btn-success">
+              <i class="bi bi-check-lg me-1"></i>Zurückgegeben
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-muted mb-5">Aktuell nichts ausgeliehen.</p>
+{% endif %}
+
+{# ── Rückgabe-Historie ────────────────────────────────────────────────────── #}
+{% if zurueck %}
+<h5 class="mb-3">Letzte Rückgaben <span class="badge bg-secondary ms-1">{{ zurueck|length }}</span></h5>
+<div class="table-responsive">
+  <table class="table table-sm table-hover align-middle text-muted">
+    <thead class="table-light">
+      <tr>
+        <th>Ding</th>
+        <th>An</th>
+        <th>Ausgeliehen</th>
+        <th>Zurück</th>
+        <th>Notiz</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in zurueck %}
+      <tr>
+        <td>
+          <a href="{{ url_for('ding.detail', id=v.ding.id) }}" class="text-decoration-none text-muted">
+            {{ v.ding.name }}
+          </a>
+        </td>
+        <td>{{ v.person }}</td>
+        <td>{{ v.ausgeliehen_am.strftime('%d.%m.%Y') }}</td>
+        <td>{{ v.zurueck_am.strftime('%d.%m.%Y') }}</td>
+        <td><small>{{ v.notiz or '' }}</small></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{% endblock %}
