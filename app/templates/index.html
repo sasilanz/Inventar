@@ -1,6 +1,212 @@
 {% extends 'base.html' %}
-{% block title %}InventarDB – Startseite{% endblock %}
+{% block title %}InventarDB{% endblock %}
 {% block content %}
-<h1>Willkommen bei InventarDB</h1>
-<p class="text-muted">Deine selbstgehostete Inventarverwaltung.</p>
+
+{# ── Statistiken ──────────────────────────────────────────────────────────── #}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <a href="/ding" class="card text-decoration-none text-body h-100 shadow-sm">
+      <div class="card-body text-center py-3">
+        <div class="fs-2 fw-bold text-primary">{{ stats.dinge }}</div>
+        <div class="text-muted small"><i class="bi bi-tag me-1"></i>Dinge erfasst</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="/standort/behaelter" class="card text-decoration-none text-body h-100 shadow-sm">
+      <div class="card-body text-center py-3">
+        <div class="fs-2 fw-bold text-success">{{ stats.behaelter }}</div>
+        <div class="text-muted small"><i class="bi bi-box-seam me-1"></i>Behälter</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="/standort/gestelle" class="card text-decoration-none text-body h-100 shadow-sm">
+      <div class="card-body text-center py-3">
+        <div class="fs-2 fw-bold text-warning">{{ stats.gestelle }}</div>
+        <div class="text-muted small"><i class="bi bi-bookshelf me-1"></i>Gestelle</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
+    <a href="/verleih" class="card text-decoration-none text-body h-100 shadow-sm">
+      <div class="card-body text-center py-3">
+        <div class="fs-2 fw-bold {{ 'text-danger' if stats.ausgeliehen else 'text-secondary' }}">
+          {{ stats.ausgeliehen }}
+        </div>
+        <div class="text-muted small"><i class="bi bi-arrow-left-right me-1"></i>Ausgeliehen</div>
+      </div>
+    </a>
+  </div>
+</div>
+
+{# ── Schnellzugriff ───────────────────────────────────────────────────────── #}
+<div class="d-flex gap-2 mb-5 flex-wrap">
+  <a href="/suchen" class="btn btn-primary">
+    <i class="bi bi-search me-1"></i>Suchen
+  </a>
+  <a href="/erfassen" class="btn btn-outline-primary">
+    <i class="bi bi-plus-circle me-1"></i>Erfassen
+  </a>
+  <a href="/ding" class="btn btn-outline-secondary">
+    <i class="bi bi-list-ul me-1"></i>Alle Dinge
+  </a>
+  <a href="/standort" class="btn btn-outline-secondary">
+    <i class="bi bi-geo-alt me-1"></i>Standorte
+  </a>
+</div>
+
+{# ── Wie ist die App aufgebaut? ───────────────────────────────────────────── #}
+<h4 class="mb-3">Wie ist die App aufgebaut?</h4>
+
+<p class="text-muted mb-3">
+  Alles ist hierarchisch organisiert – von der grössten Einheit (Zone) bis zum einzelnen Ding.
+  Du kannst so spezifisch sein wie du willst: ein Ding kann direkt in einem Raum liegen,
+  oder tief verschachtelt in einem Behälter in einem Regalfach.
+</p>
+
+<div class="row g-3 mb-5">
+
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="card h-100 border-0 bg-light">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <i class="bi bi-geo-alt-fill fs-4 text-secondary me-2"></i>
+          <h6 class="mb-0">Zone</h6>
+        </div>
+        <p class="small text-muted mb-1">Oberste Ebene. Gruppiert mehrere Räume.</p>
+        <p class="small mb-0"><strong>Beispiel:</strong> Keller, Erdgeschoss, Estrich</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="card h-100 border-0 bg-light">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <i class="bi bi-door-open fs-4 text-secondary me-2"></i>
+          <h6 class="mb-0">Raum</h6>
+        </div>
+        <p class="small text-muted mb-1">Ein physischer Raum innerhalb einer Zone.</p>
+        <p class="small mb-0"><strong>Beispiel:</strong> Werkstatt, Garage, Schlafzimmer</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="card h-100 border-0 bg-light">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <i class="bi bi-bookshelf fs-4 text-warning me-2"></i>
+          <h6 class="mb-0">Gestell</h6>
+        </div>
+        <p class="small text-muted mb-1">Ein Möbelstück oder eine Ablage im Raum.</p>
+        <p class="small mb-0"><strong>Beispiel:</strong> Werkbank, Ivar-Regal, Werkstattwagen, Kallax</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="card h-100 border-0 bg-light">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <i class="bi bi-grid fs-4 text-info me-2"></i>
+          <h6 class="mb-0">Regalfach</h6>
+        </div>
+        <p class="small text-muted mb-1">Eine Unterteilung innerhalb eines Gestells. Optional.</p>
+        <p class="small mb-0"><strong>Beispiel:</strong> Kallax A1, Kallax B3, Schublade 2</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="card h-100 border-0 bg-light">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <i class="bi bi-box-seam fs-4 text-success me-2"></i>
+          <h6 class="mb-0">Behälter</h6>
+        </div>
+        <p class="small text-muted mb-1">Eine Box, Kiste oder Schublade mit Inhalt. Optional.</p>
+        <p class="small mb-0"><strong>Beispiel:</strong> Kuggis «Elektro», Schublade «Zangen»</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-md-6 col-lg-4">
+    <div class="card h-100 border-0 bg-light">
+      <div class="card-body">
+        <div class="d-flex align-items-center mb-2">
+          <i class="bi bi-tag-fill fs-4 text-primary me-2"></i>
+          <h6 class="mb-0">Ding</h6>
+        </div>
+        <p class="small text-muted mb-1">Der eigentliche Gegenstand. Kann überall sitzen.</p>
+        <p class="small mb-0"><strong>Beispiel:</strong> Akku-Bohrer, Camping-Matte, Gitarrenkoffer</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{# ── Mögliche Standort-Kombinationen ─────────────────────────────────────── #}
+<h4 class="mb-3">Wie flexibel kann ein Ding platziert werden?</h4>
+
+<div class="table-responsive mb-5">
+  <table class="table table-sm table-bordered align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Situation</th>
+        <th>Standort-Pfad</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Ding liegt einfach irgendwo im Raum</td>
+        <td><span class="badge bg-secondary">Raum</span></td>
+      </tr>
+      <tr>
+        <td>Ding liegt auf einem Regal (kein Fach, kein Behälter)</td>
+        <td><span class="badge bg-secondary">Raum</span> → <span class="badge bg-warning text-dark">Gestell</span></td>
+      </tr>
+      <tr>
+        <td>Ding liegt in einem Behälter direkt auf dem Regal</td>
+        <td><span class="badge bg-secondary">Raum</span> → <span class="badge bg-warning text-dark">Gestell</span> → <span class="badge bg-success">Behälter</span></td>
+      </tr>
+      <tr>
+        <td>Ding liegt in einem Kallax-Fach (ohne Behälter)</td>
+        <td><span class="badge bg-secondary">Raum</span> → <span class="badge bg-warning text-dark">Gestell</span> → <span class="badge bg-info text-dark">Regalfach</span></td>
+      </tr>
+      <tr>
+        <td>Ding liegt in einer Box in einem Kallax-Fach</td>
+        <td><span class="badge bg-secondary">Raum</span> → <span class="badge bg-warning text-dark">Gestell</span> → <span class="badge bg-info text-dark">Regalfach</span> → <span class="badge bg-success">Behälter</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+{# ── Erste Schritte ───────────────────────────────────────────────────────── #}
+<h4 class="mb-3">Erste Schritte</h4>
+
+<ol class="mb-0">
+  <li class="mb-2">
+    <strong>Zone anlegen</strong> – z.B. «Keller»
+    <a href="/standort" class="ms-2 small text-muted">→ Standorte</a>
+  </li>
+  <li class="mb-2">
+    <strong>Räume anlegen</strong> – z.B. «Werkstatt», «Garage»
+  </li>
+  <li class="mb-2">
+    <strong>Gestelle anlegen</strong> – z.B. «Werkbank», «Kallax»
+  </li>
+  <li class="mb-2">
+    <strong>Optional: Regalfächer anlegen</strong> – z.B. für Kallax-Zellen
+  </li>
+  <li class="mb-2">
+    <strong>Optional: Behälter anlegen</strong> – z.B. Kuggis, Schubladen
+  </li>
+  <li class="mb-2">
+    <strong>Dinge erfassen</strong> – und dem richtigen Standort zuweisen
+    <a href="/erfassen" class="ms-2 small text-muted">→ Erfassen</a>
+  </li>
+</ol>
+
 {% endblock %}

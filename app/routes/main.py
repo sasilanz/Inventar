@@ -10,7 +10,16 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def index():
-    return render_template('index.html')
+    from app.models.standort import Raum, Gestell, Behaelter
+    from app.models.tracking import Verleih
+    stats = dict(
+        dinge      = Ding.query.count(),
+        behaelter  = Behaelter.query.count(),
+        gestelle   = Gestell.query.count(),
+        raeume     = Raum.query.count(),
+        ausgeliehen= Verleih.query.filter_by(zurueck_am=None).count(),
+    )
+    return render_template('index.html', stats=stats)
 
 
 @main_bp.route('/suchen')
