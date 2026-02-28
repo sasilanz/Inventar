@@ -54,22 +54,32 @@
       <label class="form-label">Standort <small class="text-muted">(Auswahl filtert die nächste Stufe)</small></label>
       <div class="row g-2">
 
-        <div class="col-12 col-sm-6 col-lg-3">
+        <div class="col-12 col-sm-6 col-lg-2">
+          <select name="zone_id" id="sel_zone" class="form-select">
+            <option value="">– Zone: alle –</option>
+            {% for z in zonen %}
+            <option value="{{ z.id }}" {{ 'selected' if z.id == zone_id }}>{{ z.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-2">
           <select name="raum_id" id="sel_raum" class="form-select">
             <option value="">– Raum: alle –</option>
             {% for r in raeume %}
-            <option value="{{ r.id }}" {{ 'selected' if r.id == raum_id }}>
-              {{ r.zone.name }} / {{ r.name }}
+            <option value="{{ r.id }}" data-zone="{{ r.zone_id }}"
+                    {{ 'selected' if r.id == raum_id }}>
+              {{ r.name }}
             </option>
             {% endfor %}
           </select>
         </div>
 
-        <div class="col-12 col-sm-6 col-lg-3">
+        <div class="col-12 col-sm-6 col-lg-2">
           <select name="gestell_id" id="sel_gestell" class="form-select">
             <option value="">– Gestell: alle –</option>
             {% for g in gestelle %}
-            <option value="{{ g.id }}" data-raum="{{ g.raum_id }}"
+            <option value="{{ g.id }}" data-raum="{{ g.raum_id }}" data-zone="{{ g.raum.zone_id }}"
                     {{ 'selected' if g.id == gestell_id }}>
               {{ g.raum.name }} / {{ g.name }}
             </option>
@@ -84,6 +94,7 @@
             <option value="{{ f.id }}"
                     data-gestell="{{ f.gestell_id }}"
                     data-raum="{{ f.gestell.raum_id }}"
+                    data-zone="{{ f.gestell.raum.zone_id }}"
                     {{ 'selected' if f.id == regalfach_id }}>
               {{ f.gestell.name }} / {{ f.bezeichnung }}
             </option>
@@ -99,19 +110,23 @@
               {%- set b_gestell = b.regalfach.gestell_id | string %}
               {%- set b_raum    = b.regalfach.gestell.raum_id | string %}
               {%- set b_rfach   = b.regalfach_id | string %}
+              {%- set b_zone    = b.regalfach.gestell.raum.zone_id | string %}
             {%- elif b.gestell_id %}
               {%- set b_gestell = b.gestell_id | string %}
               {%- set b_raum    = b.gestell.raum_id | string %}
               {%- set b_rfach   = '' %}
+              {%- set b_zone    = b.gestell.raum.zone_id | string %}
             {%- else %}
               {%- set b_gestell = '' %}
               {%- set b_raum    = b.raum_id | string if b.raum_id else '' %}
               {%- set b_rfach   = '' %}
+              {%- set b_zone    = b.raum.zone_id | string if b.raum_id else '' %}
             {%- endif %}
             <option value="{{ b.id }}"
                     data-regalfach="{{ b_rfach }}"
                     data-gestell="{{ b_gestell }}"
                     data-raum="{{ b_raum }}"
+                    data-zone="{{ b_zone }}"
                     {{ 'selected' if b.id == behaelter_id }}>
               {{ b.name }}{% if b.typ %} ({{ b.typ }}){% endif %}
             </option>
@@ -204,12 +219,14 @@
 
 <script>
 (function () {
+  const selZone      = document.getElementById('sel_zone');
   const selRaum      = document.getElementById('sel_raum');
   const selGestell   = document.getElementById('sel_gestell');
   const selRegalfach = document.getElementById('sel_regalfach');
   const selBehaelter = document.getElementById('sel_behaelter');
 
   // Alle Optionen einmal sichern (ohne die leere erste Option)
+  const optsRaum      = [...selRaum.options].slice(1);
   const optsGestell   = [...selGestell.options].slice(1);
   const optsRegalfach = [...selRegalfach.options].slice(1);
   const optsBehaelter = [...selBehaelter.options].slice(1);
@@ -222,23 +239,31 @@
   }
 
   function cascade() {
+    const zoneId      = selZone.value;
     const raumId      = selRaum.value;
     const gestellId   = selGestell.value;
     const regalfachId = selRegalfach.value;
 
-    filterSelect(selGestell,   optsGestell,
-      o => !raumId      || o.dataset.raum    === raumId);
+    filterSelect(selRaum, optsRaum,
+      o => !zoneId || o.dataset.zone === zoneId);
+
+    filterSelect(selGestell, optsGestell,
+      o => (!zoneId  || o.dataset.zone === zoneId) &&
+           (!raumId  || o.dataset.raum === raumId));
 
     filterSelect(selRegalfach, optsRegalfach,
-      o => (!raumId    || o.dataset.raum    === raumId) &&
+      o => (!zoneId    || o.dataset.zone    === zoneId) &&
+           (!raumId    || o.dataset.raum    === raumId) &&
            (!gestellId || o.dataset.gestell === gestellId));
 
     filterSelect(selBehaelter, optsBehaelter,
-      o => (!raumId      || o.dataset.raum      === raumId) &&
+      o => (!zoneId      || o.dataset.zone      === zoneId) &&
+           (!raumId      || o.dataset.raum      === raumId) &&
            (!gestellId   || o.dataset.gestell   === gestellId) &&
            (!regalfachId || o.dataset.regalfach === regalfachId));
   }
 
+  selZone.addEventListener('change', cascade);
   selRaum.addEventListener('change', cascade);
   selGestell.addEventListener('change', cascade);
   selRegalfach.addEventListener('change', cascade);

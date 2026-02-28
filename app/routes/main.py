@@ -31,6 +31,7 @@ def suchen():
     q             = request.args.get('q', '').strip()
     kategorie_id  = request.args.get('kategorie_id', type=int)
     tag_ids       = request.args.getlist('tag_ids', type=int)
+    zone_id       = request.args.get('zone_id', type=int)
     raum_id       = request.args.get('raum_id', type=int)
     gestell_id    = request.args.get('gestell_id', type=int)
     regalfach_id  = request.args.get('regalfach_id', type=int)
@@ -38,7 +39,7 @@ def suchen():
     ausgeliehen   = request.args.get('ausgeliehen', '')
     garantie_bald = request.args.get('garantie_bald')
 
-    gesucht = any([q, kategorie_id, tag_ids, raum_id, gestell_id,
+    gesucht = any([q, kategorie_id, tag_ids, zone_id, raum_id, gestell_id,
                    regalfach_id, behaelter_id, ausgeliehen, garantie_bald])
     dinge = []
 
@@ -62,6 +63,24 @@ def suchen():
             query = query.filter(Ding.tags.any(id=tid))
 
         # Standort-Filter (von spezifisch nach allgemein)
+        # Zone: alle Räume der Zone sammeln, dann wie raum_id filtern
+        if not raum_id and zone_id:
+            r_ids = [r.id for r in Raum.query.filter_by(zone_id=zone_id)]
+            if not gestell_id and not regalfach_id and not behaelter_id:
+                g_ids = [g.id for g in Gestell.query.filter(Gestell.raum_id.in_(r_ids))] if r_ids else []
+                f_ids = [f.id for f in Regalfach.query.filter(Regalfach.gestell_id.in_(g_ids))] if g_ids else []
+                b_ids = [b.id for b in Behaelter.query.filter(or_(
+                    Behaelter.raum_id.in_(r_ids),
+                    *(([Behaelter.gestell_id.in_(g_ids)]) if g_ids else []),
+                    *(([Behaelter.regalfach_id.in_(f_ids)]) if f_ids else []),
+                ))] if r_ids else []
+                conds = []
+                if r_ids: conds.append(Ding.raum_id.in_(r_ids))
+                if g_ids: conds.append(Ding.gestell_id.in_(g_ids))
+                if f_ids: conds.append(Ding.regalfach_id.in_(f_ids))
+                if b_ids: conds.append(Ding.behaelter_id.in_(b_ids))
+                if conds: query = query.filter(or_(*conds))
+
         if behaelter_id:
             query = query.filter(Ding.behaelter_id == behaelter_id)
         elif regalfach_id:
@@ -122,12 +141,13 @@ def suchen():
     return render_template('suchen.html',
         dinge=dinge, gesucht=gesucht,
         q=q, kategorie_id=kategorie_id, tag_ids=tag_ids,
-        raum_id=raum_id, gestell_id=gestell_id,
+        zone_id=zone_id, raum_id=raum_id, gestell_id=gestell_id,
         regalfach_id=regalfach_id, behaelter_id=behaelter_id,
         ausgeliehen=ausgeliehen, garantie_bald=garantie_bald,
         today=today, today_90=today + timedelta(days=90),
         kategorien=Kategorie.query.order_by(Kategorie.name).all(),
         alle_tags=Tag.query.order_by(Tag.name).all(),
+        zonen=Zone.query.order_by(Zone.name).all(),
         raeume=Raum.query.join(Zone).order_by(Zone.name, Raum.name).all(),
         gestelle=Gestell.query.order_by(Gestell.name).all(),
         regalfaecher=Regalfach.query.order_by(Regalfach.bezeichnung).all(),
