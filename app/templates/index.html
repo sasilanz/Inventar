@@ -56,6 +56,50 @@
   </a>
 </div>
 
+{# ── Aktuell ausgeliehen ──────────────────────────────────────────────────── #}
+{% if ausgeliehen %}
+<div class="card mb-5 border-warning">
+  <div class="card-header bg-warning bg-opacity-25 d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-arrow-left-right me-1"></i><strong>Aktuell ausgeliehen</strong></span>
+    <a href="/verleih" class="btn btn-sm btn-outline-secondary">Alle anzeigen</a>
+  </div>
+  <div class="card-body p-0">
+    <table class="table table-sm table-hover mb-0 align-middle">
+      <tbody>
+        {% for v in ausgeliehen %}
+        <tr class="{{ 'table-danger' if v.faellig_am and v.faellig_am < today }}">
+          <td class="ps-3">
+            <a href="{{ url_for('ding.detail', id=v.ding.id) }}" class="fw-bold text-decoration-none">
+              {{ v.ding.name }}
+            </a>
+          </td>
+          <td>{{ v.person }}</td>
+          <td>
+            {% if v.faellig_am %}
+              {% if v.faellig_am < today %}
+                <span class="text-danger fw-bold">fällig {{ v.faellig_am.strftime('%d.%m.%Y') }} ⚠</span>
+              {% else %}
+                <span class="text-muted small">fällig {{ v.faellig_am.strftime('%d.%m.%Y') }}</span>
+              {% endif %}
+            {% else %}
+              <span class="text-muted small">kein Fälligkeitsdatum</span>
+            {% endif %}
+          </td>
+          <td class="pe-3 text-end">
+            <form method="post" action="{{ url_for('verleih.zurueck', id=v.id) }}">
+              <button class="btn btn-sm btn-outline-success">
+                <i class="bi bi-check-lg"></i> Zurückgegeben
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
 {# ── Wie ist die App aufgebaut? ───────────────────────────────────────────── #}
 <h4 class="mb-3">Wie ist die App aufgebaut?</h4>
 
