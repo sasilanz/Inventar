@@ -40,28 +40,55 @@
       </div>
     </div>
 
+    {# ── In Gestell ───────────────────────────────────────────── #}
     <div id="div_gestell">
-      <select name="gestell_id" class="form-select">
+      <select id="flt_gestell_raum" class="form-select mb-2">
+        <option value="">– Raum: alle –</option>
+        {% for raum in raeume %}
+        <option value="{{ raum.id }}">{{ raum.zone.name }} / {{ raum.name }}</option>
+        {% endfor %}
+      </select>
+      <select name="gestell_id" id="sel_gestell" class="form-select">
         <option value="">– Gestell wählen –</option>
         {% for gestell in gestelle %}
-        <option value="{{ gestell.id }}"
+        <option value="{{ gestell.id }}" data-raum="{{ gestell.raum_id }}"
           {{ 'selected' if behaelter and behaelter.gestell_id == gestell.id }}>
-          {{ gestell.raum.zone.name }} / {{ gestell.raum.name }} / {{ gestell.name }}
+          {{ gestell.raum.name }} / {{ gestell.name }}
         </option>
         {% endfor %}
       </select>
     </div>
+
+    {# ── In Regalfach ─────────────────────────────────────────── #}
     <div id="div_regalfach" style="display:none">
-      <select name="regalfach_id" class="form-select">
+      <select id="flt_rfach_raum" class="form-select mb-2">
+        <option value="">– Raum: alle –</option>
+        {% for raum in raeume %}
+        <option value="{{ raum.id }}">{{ raum.zone.name }} / {{ raum.name }}</option>
+        {% endfor %}
+      </select>
+      <select id="flt_rfach_gestell" class="form-select mb-2">
+        <option value="">– Gestell: alle –</option>
+        {% for gestell in gestelle %}
+        <option value="{{ gestell.id }}" data-raum="{{ gestell.raum_id }}">
+          {{ gestell.raum.name }} / {{ gestell.name }}
+        </option>
+        {% endfor %}
+      </select>
+      <select name="regalfach_id" id="sel_regalfach" class="form-select">
         <option value="">– Regalfach wählen –</option>
         {% for fach in regalfaecher %}
         <option value="{{ fach.id }}"
+                data-gestell="{{ fach.gestell_id }}"
+                data-raum="{{ fach.gestell.raum_id }}"
           {{ 'selected' if behaelter and behaelter.regalfach_id == fach.id }}>
-          {{ fach.gestell.raum.zone.name }} / {{ fach.gestell.raum.name }} / {{ fach.gestell.name }} / {{ fach.bezeichnung }}
+          {{ fach.gestell.name }} / {{ fach.bezeichnung }}
         </option>
         {% endfor %}
       </select>
     </div>
+
+    {# ── Frei im Raum ─────────────────────────────────────────── #}
     <div id="div_raum" style="display:none">
       <select name="raum_id" class="form-select">
         <option value="">– Raum wählen –</option>
@@ -88,14 +115,54 @@
 
 <script>
 function zeigeStandort(wahl) {
-  document.getElementById('div_gestell').style.display  = wahl === 'gestell'   ? '' : 'none';
+  document.getElementById('div_gestell').style.display   = wahl === 'gestell'   ? '' : 'none';
   document.getElementById('div_regalfach').style.display = wahl === 'regalfach' ? '' : 'none';
-  document.getElementById('div_raum').style.display     = wahl === 'raum'      ? '' : 'none';
+  document.getElementById('div_raum').style.display      = wahl === 'raum'      ? '' : 'none';
 }
-// Beim Laden: richtigen Block anzeigen
-document.addEventListener('DOMContentLoaded', function() {
+
+function filterSelect(select, allOpts, filterFn) {
+  const current = select.value;
+  while (select.options.length > 1) select.remove(1);
+  allOpts.filter(filterFn).forEach(o => select.add(o.cloneNode(true)));
+  if ([...select.options].some(o => o.value === current)) select.value = current;
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  // Beim Laden: richtigen Block anzeigen
   var checked = document.querySelector('input[name="standort_typ"]:checked');
   if (checked) zeigeStandort(checked.value);
+
+  // ── Cascade: In Gestell ──────────────────────────────────────
+  const fltGRaum  = document.getElementById('flt_gestell_raum');
+  const selGestell = document.getElementById('sel_gestell');
+  const optsGestell = [...selGestell.options].slice(1);
+
+  fltGRaum.addEventListener('change', function () {
+    const raumId = this.value;
+    filterSelect(selGestell, optsGestell, o => !raumId || o.dataset.raum === raumId);
+  });
+
+  // ── Cascade: In Regalfach ────────────────────────────────────
+  const fltRRaum    = document.getElementById('flt_rfach_raum');
+  const fltRGestell = document.getElementById('flt_rfach_gestell');
+  const selRegalfach = document.getElementById('sel_regalfach');
+  const optsRGestell  = [...fltRGestell.options].slice(1);
+  const optsRegalfach = [...selRegalfach.options].slice(1);
+
+  fltRRaum.addEventListener('change', function () {
+    const raumId = this.value;
+    filterSelect(fltRGestell, optsRGestell, o => !raumId || o.dataset.raum === raumId);
+    fltRGestell.value = '';
+    filterSelect(selRegalfach, optsRegalfach, o => !raumId || o.dataset.raum === raumId);
+  });
+
+  fltRGestell.addEventListener('change', function () {
+    const gestellId = this.value;
+    const raumId    = fltRRaum.value;
+    filterSelect(selRegalfach, optsRegalfach,
+      o => (!raumId    || o.dataset.raum    === raumId) &&
+           (!gestellId || o.dataset.gestell === gestellId));
+  });
 });
 </script>
 {% endblock %}
