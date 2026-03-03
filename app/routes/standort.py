@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from app import db
 from app.models.standort import Zone, Raum, Gestell, Regalfach, Behaelter
+from app.models.tracking import Bewegung
 
 standort_bp = Blueprint('standort', __name__)
 
@@ -122,6 +123,9 @@ def gestell_neu():
             beschreibung=request.form.get('beschreibung') or None
         )
         db.session.add(gestell)
+        db.session.flush()
+        db.session.add(Bewegung(gestell_id=gestell.id, von_beschreibung=None,
+                                nach_beschreibung=gestell.standort_beschreibung()))
         db.session.commit()
         flash('Gestell gespeichert.', 'success')
         return redirect(url_for('standort.gestell_liste'))
@@ -133,10 +137,15 @@ def gestell_bearbeiten(id):
     gestell = Gestell.query.get_or_404(id)
     raeume = Raum.query.join(Zone).order_by(Zone.name, Raum.name).all()
     if request.method == 'POST':
+        von = gestell.standort_beschreibung()
         gestell.raum_id = request.form['raum_id']
         gestell.typ = request.form.get('typ') or None
         gestell.name = request.form['name'].strip()
         gestell.beschreibung = request.form.get('beschreibung') or None
+        db.session.flush()
+        nach = gestell.standort_beschreibung()
+        if von != nach:
+            db.session.add(Bewegung(gestell_id=gestell.id, von_beschreibung=von, nach_beschreibung=nach))
         db.session.commit()
         flash('Gestell aktualisiert.', 'success')
         return redirect(url_for('standort.gestell_liste'))
@@ -221,6 +230,10 @@ def behaelter_neu():
             raum_id=request.form.get('raum_id') or None
         )
         db.session.add(behaelter)
+        db.session.flush()
+        nach = behaelter.standort_beschreibung()
+        if nach != 'Kein Standort':
+            db.session.add(Bewegung(behaelter_id=behaelter.id, von_beschreibung=None, nach_beschreibung=nach))
         db.session.commit()
         flash('Behälter gespeichert.', 'success')
         return redirect(url_for('standort.behaelter_liste'))
@@ -235,12 +248,17 @@ def behaelter_bearbeiten(id):
     gestelle = Gestell.query.join(Raum).order_by(Raum.name, Gestell.name).all()
     regalfaecher = Regalfach.query.join(Gestell).order_by(Gestell.name, Regalfach.position_index).all()
     if request.method == 'POST':
+        von = behaelter.standort_beschreibung()
         behaelter.typ = request.form.get('typ') or None
         behaelter.name = request.form['name'].strip()
         behaelter.beschreibung = request.form.get('beschreibung') or None
         behaelter.regalfach_id = request.form.get('regalfach_id') or None
         behaelter.gestell_id = request.form.get('gestell_id') or None
         behaelter.raum_id = request.form.get('raum_id') or None
+        db.session.flush()
+        nach = behaelter.standort_beschreibung()
+        if von != nach:
+            db.session.add(Bewegung(behaelter_id=behaelter.id, von_beschreibung=von, nach_beschreibung=nach))
         db.session.commit()
         flash('Behälter aktualisiert.', 'success')
         return redirect(url_for('standort.behaelter_liste'))

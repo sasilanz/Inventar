@@ -94,4 +94,24 @@
 <p class="text-muted">Dieses Gestell ist leer.</p>
 {% endif %}
 
+{% if gestell.bewegungen %}
+<details class="mt-4">
+  <summary class="text-muted small" style="cursor:pointer">
+    <i class="bi bi-clock-history me-1"></i>Standort-Verlauf ({{ gestell.bewegungen|length }} Einträge)
+  </summary>
+  <ul class="list-unstyled mt-2 small ps-2">
+    {% for b in gestell.bewegungen|sort(attribute='zeitpunkt', reverse=true) %}
+    <li class="text-muted py-1 border-bottom">
+      <span class="text-secondary">{{ b.zeitpunkt.strftime('%d.%m.%Y %H:%M') }}</span>
+      {% if b.von_beschreibung %}
+        {{ b.von_beschreibung }} → <strong>{{ b.nach_beschreibung }}</strong>
+      {% else %}
+        Erfasst in <strong>{{ b.nach_beschreibung }}</strong>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</details>
+{% endif %}
+
 {% endblock %}

@@ -23,11 +23,13 @@ class Verleih(db.Model):
 class Bewegung(db.Model):
     __tablename__ = 'bewegung'
     id = db.Column(db.Integer, primary_key=True)
-    ding_id = db.Column(db.Integer, db.ForeignKey('ding.id'), nullable=False)
-    von_beschreibung = db.Column(db.String(500))   # denormalisiert als Text
+    ding_id = db.Column(db.Integer, db.ForeignKey('ding.id'), nullable=True)
+    behaelter_id = db.Column(db.Integer, db.ForeignKey('behaelter.id'), nullable=True)
+    gestell_id = db.Column(db.Integer, db.ForeignKey('gestell.id'), nullable=True)
+    von_beschreibung = db.Column(db.String(500))
     nach_beschreibung = db.Column(db.String(500))
     zeitpunkt = db.Column(db.DateTime, default=datetime.utcnow)
     notiz = db.Column(db.Text)
 
     def __repr__(self):
-        return f'<Bewegung Ding {self.ding_id} um {self.zeitpunkt}>'
+        return f'<Bewegung um {self.zeitpunkt}>'

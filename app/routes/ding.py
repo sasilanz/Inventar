@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request
 from app import db
 from app.models.standort import Raum, Gestell, Regalfach, Behaelter, Zone
 from app.models.inventar import Kategorie, Tag, Ding
+from app.models.tracking import Bewegung
 
 ding_bp = Blueprint('ding', __name__)
 
@@ -40,6 +41,10 @@ def neu():
         ding = Ding(name=request.form['name'].strip())
         _ding_aus_formular(ding, request.form)
         db.session.add(ding)
+        db.session.flush()
+        nach = ding.standort_beschreibung()
+        if nach != 'Kein Standort':
+            db.session.add(Bewegung(ding_id=ding.id, von_beschreibung=None, nach_beschreibung=nach))
         db.session.commit()
         flash('Ding gespeichert.', 'success')
         return redirect(url_for('ding.detail', id=ding.id))
@@ -50,8 +55,13 @@ def neu():
 def bearbeiten(id):
     ding = Ding.query.get_or_404(id)
     if request.method == 'POST':
+        von = ding.standort_beschreibung()
         ding.name = request.form['name'].strip()
         _ding_aus_formular(ding, request.form)
+        db.session.flush()
+        nach = ding.standort_beschreibung()
+        if von != nach:
+            db.session.add(Bewegung(ding_id=ding.id, von_beschreibung=von, nach_beschreibung=nach))
         db.session.commit()
         flash('Ding aktualisiert.', 'success')
         return redirect(url_for('ding.detail', id=ding.id))

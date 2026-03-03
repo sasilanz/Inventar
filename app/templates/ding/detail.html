@@ -273,5 +273,28 @@
     </div>
   </div>
 
+  {# Bewegungshistorie #}
+  {% if ding.bewegungen %}
+  <div class="col-12">
+    <details>
+      <summary class="text-muted small" style="cursor:pointer">
+        <i class="bi bi-clock-history me-1"></i>Standort-Verlauf ({{ ding.bewegungen|length }} Einträge)
+      </summary>
+      <ul class="list-unstyled mt-2 small ps-2">
+        {% for b in ding.bewegungen|sort(attribute='zeitpunkt', reverse=true) %}
+        <li class="text-muted py-1 border-bottom">
+          <span class="text-secondary">{{ b.zeitpunkt.strftime('%d.%m.%Y %H:%M') }}</span>
+          {% if b.von_beschreibung %}
+            {{ b.von_beschreibung }} → <strong>{{ b.nach_beschreibung }}</strong>
+          {% else %}
+            Erfasst in <strong>{{ b.nach_beschreibung }}</strong>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </details>
+  </div>
+  {% endif %}
+
 </div>
 {% endblock %}

@@ -47,6 +47,12 @@ class Gestell(db.Model):
                                  foreign_keys='Behaelter.gestell_id')
     dinge = db.relationship('Ding', backref='gestell', lazy=True,
                              foreign_keys='Ding.gestell_id')
+    bewegungen = db.relationship('Bewegung', backref='gestell', lazy=True,
+                                  foreign_keys='Bewegung.gestell_id',
+                                  cascade='all, delete-orphan')
+
+    def standort_beschreibung(self):
+        return f'{self.raum.zone.name} / {self.raum.name}'
 
     def __repr__(self):
         return f'<Gestell {self.name}>'
@@ -81,6 +87,18 @@ class Behaelter(db.Model):
 
     dinge = db.relationship('Ding', backref='behaelter', lazy=True,
                              foreign_keys='Ding.behaelter_id')
+    bewegungen = db.relationship('Bewegung', backref='behaelter', lazy=True,
+                                  foreign_keys='Bewegung.behaelter_id',
+                                  cascade='all, delete-orphan')
+
+    def standort_beschreibung(self):
+        if self.regalfach_id:
+            return f'{self.regalfach.gestell.raum.zone.name} / {self.regalfach.gestell.raum.name} / {self.regalfach.gestell.name} / {self.regalfach.bezeichnung}'
+        if self.gestell_id:
+            return f'{self.gestell.raum.zone.name} / {self.gestell.raum.name} / {self.gestell.name}'
+        if self.raum_id:
+            return f'{self.raum.zone.name} / {self.raum.name} (frei im Raum)'
+        return 'Kein Standort'
 
     def __repr__(self):
         return f'<Behaelter {self.name}>'
