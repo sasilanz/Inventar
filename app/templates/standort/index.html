@@ -69,7 +69,17 @@
         <ul class="list-unstyled mb-0">
           {% for raum in zone.raeume %}
           <li class="py-1 border-bottom">
-            <i class="bi bi-door-open text-muted me-1"></i> {{ raum.name }}
+            <a href="{{ url_for('standort.raum_detail', id=raum.id) }}" class="text-decoration-none">
+              <i class="bi bi-door-open text-muted me-1"></i>
+              <span class="fw-semibold">{{ raum.name }}</span>
+              {% set n_gestelle = raum.gestelle|length %}
+              {% set n_behaelter = raum.behaelter|selectattr('regalfach_id', 'none')|list|length %}
+              {% set n_dinge = raum.dinge|length %}
+              {% if n_gestelle %}<span class="badge bg-warning text-dark ms-1">{{ n_gestelle }} Gestell{{ 'e' if n_gestelle != 1 }}</span>{% endif %}
+              {% if n_behaelter %}<span class="badge bg-success ms-1">{{ n_behaelter }} Behälter</span>{% endif %}
+              {% if n_dinge %}<span class="badge bg-primary ms-1">{{ n_dinge }} Ding{{ 'e' if n_dinge != 1 }}</span>{% endif %}
+              <i class="bi bi-chevron-right text-muted ms-1 small"></i>
+            </a>
           </li>
           {% endfor %}
         </ul>
