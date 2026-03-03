@@ -62,8 +62,8 @@ def zone_loeschen(id):
 # ── Raum ───────────────────────────────────────────────────────────────────
 @standort_bp.route('/raeume')
 def raum_liste():
-    raeume = Raum.query.join(Zone).order_by(Zone.name, Raum.name).all()
-    return render_template('standort/raum_liste.html', raeume=raeume)
+    zonen = Zone.query.order_by(Zone.name).all()
+    return render_template('standort/raum_liste.html', zonen=zonen)
 
 
 @standort_bp.route('/raeume/neu', methods=['GET', 'POST'])

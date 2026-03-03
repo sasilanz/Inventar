@@ -8,35 +8,62 @@
   </a>
 </div>
 
-<div class="list-group">
-  {% for raum in raeume %}
-  <div class="list-group-item d-flex justify-content-between align-items-center">
-    <div>
-      <span class="badge bg-secondary me-2">{{ raum.zone.name }}</span>
-      <strong>{{ raum.name }}</strong>
-      {% if raum.beschreibung %}
-        <small class="text-muted ms-2">{{ raum.beschreibung }}</small>
-      {% endif %}
-    </div>
-    <div class="d-flex gap-1">
-      <a href="{{ url_for('standort.raum_detail', id=raum.id) }}"
-         class="btn btn-sm btn-outline-primary">
-        <i class="bi bi-box-arrow-in-right"></i>
-      </a>
-      <a href="{{ url_for('standort.raum_bearbeiten', id=raum.id) }}"
-         class="btn btn-sm btn-outline-secondary">
-        <i class="bi bi-pencil"></i>
-      </a>
-      <form method="post" action="{{ url_for('standort.raum_loeschen', id=raum.id) }}"
-            onsubmit="return confirm('Raum „{{ raum.name }}" wirklich löschen?')">
-        <button class="btn btn-sm btn-outline-danger">
-          <i class="bi bi-trash"></i>
-        </button>
-      </form>
+{% if zonen %}
+<div class="accordion" id="zonenAccordion">
+  {% for zone in zonen %}
+  <div class="accordion-item">
+    <h2 class="accordion-header">
+      <button class="accordion-button {{ '' if loop.first else 'collapsed' }}" type="button"
+              data-bs-toggle="collapse" data-bs-target="#zone{{ zone.id }}">
+        <i class="bi bi-building me-2 text-muted"></i>
+        <strong>{{ zone.name }}</strong>
+        <span class="badge bg-secondary ms-2">{{ zone.raeume|length }} Raum{{ '' if zone.raeume|length == 1 else 'e' }}</span>
+      </button>
+    </h2>
+    <div id="zone{{ zone.id }}" class="accordion-collapse collapse {{ 'show' if loop.first }}">
+      <div class="accordion-body p-0">
+        {% if zone.raeume %}
+        <div class="list-group list-group-flush">
+          {% for raum in zone.raeume | sort(attribute='name') %}
+          <div class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <a href="{{ url_for('standort.raum_detail', id=raum.id) }}" class="fw-semibold text-decoration-none">
+                <i class="bi bi-door-open me-1 text-muted"></i>{{ raum.name }}
+              </a>
+              {% if raum.beschreibung %}
+                <small class="text-muted ms-2">{{ raum.beschreibung }}</small>
+              {% endif %}
+              <div class="mt-1">
+                {% if raum.gestelle %}<span class="badge bg-warning text-dark">{{ raum.gestelle|length }} Gestell{{ 'e' if raum.gestelle|length != 1 }}</span>{% endif %}
+                {% set n_b = raum.behaelter|selectattr('regalfach_id', 'none')|list|length %}
+                {% if n_b %}<span class="badge bg-success ms-1">{{ n_b }} Behälter</span>{% endif %}
+                {% if raum.dinge %}<span class="badge bg-primary ms-1">{{ raum.dinge|length }} Ding{{ 'e' if raum.dinge|length != 1 }}</span>{% endif %}
+              </div>
+            </div>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('standort.raum_bearbeiten', id=raum.id) }}"
+                 class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <form method="post" action="{{ url_for('standort.raum_loeschen', id=raum.id) }}"
+                    onsubmit="return confirm('Raum „{{ raum.name }}" wirklich löschen?')">
+                <button class="btn btn-sm btn-outline-danger">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted p-3 mb-0">Keine Räume in dieser Zone.</p>
+        {% endif %}
+      </div>
     </div>
   </div>
-  {% else %}
-  <div class="list-group-item text-muted">Noch keine Räume erfasst.</div>
   {% endfor %}
 </div>
+{% else %}
+<p class="text-muted">Noch keine Zonen erfasst. <a href="{{ url_for('standort.zone_neu') }}">Zone anlegen</a></p>
+{% endif %}
 {% endblock %}
