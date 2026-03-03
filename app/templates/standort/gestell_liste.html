@@ -75,7 +75,7 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+(function () {
   const fltZone = document.getElementById('flt_zone');
   const fltRaum = document.getElementById('flt_raum');
   const items   = document.querySelectorAll('#gestell_liste .list-group-item[data-zone]');
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
     items.forEach(item => {
       const show = (!zoneId || item.dataset.zone === zoneId) &&
                    (!raumId || item.dataset.raum === raumId);
-      item.style.display = show ? '' : 'none';
+      item.classList.toggle('d-none', !show);
       if (show) visible++;
     });
     count.textContent = (zoneId || raumId) ? `${visible} von ${items.length}` : '';
@@ -117,6 +117,6 @@ document.addEventListener('DOMContentLoaded', function () {
     fltRaum.value = '';
     applyFilters();
   });
-});
+}());
 </script>
 {% endblock %}

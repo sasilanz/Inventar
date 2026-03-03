@@ -94,7 +94,7 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+(function () {
   const fltZone    = document.getElementById('flt_zone');
   const fltRaum    = document.getElementById('flt_raum');
   const fltGestell = document.getElementById('flt_gestell');
@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const show = (!zoneId    || item.dataset.zone    === zoneId)    &&
                    (!raumId    || item.dataset.raum    === raumId)    &&
                    (!gestellId || item.dataset.gestell === gestellId);
-      item.style.display = show ? '' : 'none';
+      item.classList.toggle('d-none', !show);
       if (show) visible++;
     });
     count.textContent = (zoneId || raumId || gestellId) ? `${visible} von ${items.length}` : '';
@@ -153,6 +153,6 @@ document.addEventListener('DOMContentLoaded', function () {
     fltGestell.value = '';
     applyFilters();
   });
-});
+}());
 </script>
 {% endblock %}

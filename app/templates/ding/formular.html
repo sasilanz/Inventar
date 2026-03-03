@@ -212,7 +212,7 @@
 </form>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+(function () {
   const fltZone = document.getElementById('flt_zone');
   const fltRaum = document.getElementById('flt_raum');
 
@@ -270,6 +270,6 @@ document.addEventListener('DOMContentLoaded', function () {
     fltRaum.value = '';
     applyFilters();
   });
-});
+}());
 </script>
 {% endblock %}
