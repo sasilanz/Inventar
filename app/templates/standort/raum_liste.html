@@ -41,6 +41,10 @@
               </div>
             </div>
             <div class="d-flex gap-1">
+              <a href="{{ url_for('qr.raum_qr', id=raum.id) }}" target="_blank"
+                 class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-qr-code"></i>
+              </a>
               <a href="{{ url_for('standort.raum_bearbeiten', id=raum.id) }}"
                  class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-pencil"></i>
