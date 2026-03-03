@@ -81,6 +81,7 @@ def _formular_daten():
 
 def _ding_aus_formular(ding, form):
     ding.beschreibung = form.get('beschreibung') or None
+    ding.anzahl = int(form.get('anzahl') or 1)
     ding.hersteller = form.get('hersteller') or None
     ding.modell = form.get('modell') or None
     ding.seriennummer = form.get('seriennummer') or None

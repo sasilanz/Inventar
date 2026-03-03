@@ -35,6 +35,7 @@ class Ding(db.Model):
     # Basis
     name = db.Column(db.String(200), nullable=False)
     beschreibung = db.Column(db.Text)
+    anzahl = db.Column(db.Integer, default=1, nullable=False)
 
     # Standort (genau eines davon gesetzt)
     raum_id = db.Column(db.Integer, db.ForeignKey('raum.id'), nullable=True)

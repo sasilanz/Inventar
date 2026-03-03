@@ -88,7 +88,12 @@
             {% endfor %}
           </div>
         {% endif %}
-        {% if not ding.kategorie and not ding.tags %}
+        {% if ding.anzahl > 1 %}
+          <div class="mt-2"><strong>Anzahl:</strong>
+            <span class="badge bg-info text-dark fs-6">{{ ding.anzahl }}×</span>
+          </div>
+        {% endif %}
+        {% if not ding.kategorie and not ding.tags and ding.anzahl <= 1 %}
           <span class="text-muted">Keine Klassifikation.</span>
         {% endif %}
       </div>
