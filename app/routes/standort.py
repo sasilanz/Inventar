@@ -109,7 +109,9 @@ def raum_loeschen(id):
 @standort_bp.route('/gestelle')
 def gestell_liste():
     gestelle = Gestell.query.join(Raum).order_by(Raum.name, Gestell.name).all()
-    return render_template('standort/gestell_liste.html', gestelle=gestelle)
+    zonen = Zone.query.order_by(Zone.name).all()
+    raeume = Raum.query.join(Zone).order_by(Zone.name, Raum.name).all()
+    return render_template('standort/gestell_liste.html', gestelle=gestelle, zonen=zonen, raeume=raeume)
 
 
 @standort_bp.route('/gestelle/neu', methods=['GET', 'POST'])
@@ -212,7 +214,11 @@ def regalfach_loeschen(id):
 @standort_bp.route('/behaelter')
 def behaelter_liste():
     behaelter = Behaelter.query.order_by(Behaelter.name).all()
-    return render_template('standort/behaelter_liste.html', behaelter=behaelter)
+    zonen = Zone.query.order_by(Zone.name).all()
+    raeume = Raum.query.join(Zone).order_by(Zone.name, Raum.name).all()
+    gestelle = Gestell.query.join(Raum).order_by(Raum.name, Gestell.name).all()
+    return render_template('standort/behaelter_liste.html', behaelter=behaelter,
+                           zonen=zonen, raeume=raeume, gestelle=gestelle)
 
 
 @standort_bp.route('/behaelter/neu', methods=['GET', 'POST'])

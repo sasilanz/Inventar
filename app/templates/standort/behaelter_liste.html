@@ -8,9 +8,50 @@
   </a>
 </div>
 
-<div class="list-group">
+{# Filter-Zeile #}
+<div class="row g-2 mb-3">
+  <div class="col-12 col-md-3">
+    <select id="flt_zone" class="form-select form-select-sm">
+      <option value="">– alle Zonen –</option>
+      {% for z in zonen %}
+      <option value="{{ z.id }}">{{ z.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-12 col-md-3">
+    <select id="flt_raum" class="form-select form-select-sm">
+      <option value="">– alle Räume –</option>
+      {% for r in raeume %}
+      <option value="{{ r.id }}" data-zone="{{ r.zone_id }}">{{ r.zone.name }} / {{ r.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-12 col-md-3">
+    <select id="flt_gestell" class="form-select form-select-sm">
+      <option value="">– alle Gestelle –</option>
+      {% for g in gestelle %}
+      <option value="{{ g.id }}" data-raum="{{ g.raum_id }}" data-zone="{{ g.raum.zone_id }}">
+        {{ g.raum.name }} / {{ g.name }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto d-flex align-items-center">
+    <button type="button" id="btn_flt_reset" class="btn btn-sm btn-outline-secondary">Zurücksetzen</button>
+  </div>
+  <div class="col-auto d-flex align-items-center">
+    <small class="text-muted" id="flt_count"></small>
+  </div>
+</div>
+
+<div class="list-group" id="behaelter_liste">
   {% for b in behaelter %}
-  <div class="list-group-item d-flex justify-content-between align-items-center">
+    {% set eff_raum = b.raum if b.raum_id else (b.gestell.raum if b.gestell_id else (b.regalfach.gestell.raum if b.regalfach_id else none)) %}
+    {% set eff_gestell = b.gestell if b.gestell_id else (b.regalfach.gestell if b.regalfach_id else none) %}
+  <div class="list-group-item d-flex justify-content-between align-items-center"
+       data-zone="{{ eff_raum.zone_id if eff_raum else '' }}"
+       data-raum="{{ eff_raum.id if eff_raum else '' }}"
+       data-gestell="{{ eff_gestell.id if eff_gestell else '' }}">
     <div>
       {% if b.regalfach %}
         <span class="badge bg-secondary me-2">
@@ -51,4 +92,67 @@
   <div class="list-group-item text-muted">Noch keine Behälter erfasst.</div>
   {% endfor %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const fltZone    = document.getElementById('flt_zone');
+  const fltRaum    = document.getElementById('flt_raum');
+  const fltGestell = document.getElementById('flt_gestell');
+  const items      = document.querySelectorAll('#behaelter_liste .list-group-item[data-zone]');
+  const count      = document.getElementById('flt_count');
+  const savedRaumOpts    = [...fltRaum.options].slice(1);
+  const savedGestellOpts = [...fltGestell.options].slice(1);
+
+  function filterSelect(sel, opts, fn) {
+    const cur = sel.value;
+    while (sel.options.length > 1) sel.remove(1);
+    opts.filter(fn).forEach(o => sel.add(o.cloneNode(true)));
+    if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
+  }
+
+  function applyFilters() {
+    const zoneId    = fltZone.value;
+    const raumId    = fltRaum.value;
+    const gestellId = fltGestell.value;
+    let visible = 0;
+    items.forEach(item => {
+      const show = (!zoneId    || item.dataset.zone    === zoneId)    &&
+                   (!raumId    || item.dataset.raum    === raumId)    &&
+                   (!gestellId || item.dataset.gestell === gestellId);
+      item.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    count.textContent = (zoneId || raumId || gestellId) ? `${visible} von ${items.length}` : '';
+  }
+
+  fltZone.addEventListener('change', function () {
+    const zoneId = this.value;
+    filterSelect(fltRaum,    savedRaumOpts,    o => !zoneId || o.dataset.zone === zoneId);
+    filterSelect(fltGestell, savedGestellOpts, o => !zoneId || o.dataset.zone === zoneId);
+    fltRaum.value = '';
+    fltGestell.value = '';
+    applyFilters();
+  });
+
+  fltRaum.addEventListener('change', function () {
+    const raumId = this.value;
+    const zoneId = fltZone.value;
+    filterSelect(fltGestell, savedGestellOpts,
+      o => (!zoneId || o.dataset.zone === zoneId) && (!raumId || o.dataset.raum === raumId));
+    fltGestell.value = '';
+    applyFilters();
+  });
+
+  fltGestell.addEventListener('change', applyFilters);
+
+  document.getElementById('btn_flt_reset').addEventListener('click', function () {
+    fltZone.value = '';
+    filterSelect(fltRaum,    savedRaumOpts,    () => true);
+    filterSelect(fltGestell, savedGestellOpts, () => true);
+    fltRaum.value = '';
+    fltGestell.value = '';
+    applyFilters();
+  });
+});
+</script>
 {% endblock %}

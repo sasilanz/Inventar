@@ -8,9 +8,37 @@
   </a>
 </div>
 
-<div class="list-group">
+{# Filter-Zeile #}
+<div class="row g-2 mb-3">
+  <div class="col-12 col-md-4">
+    <select id="flt_zone" class="form-select form-select-sm">
+      <option value="">– alle Zonen –</option>
+      {% for z in zonen %}
+      <option value="{{ z.id }}">{{ z.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-12 col-md-4">
+    <select id="flt_raum" class="form-select form-select-sm">
+      <option value="">– alle Räume –</option>
+      {% for r in raeume %}
+      <option value="{{ r.id }}" data-zone="{{ r.zone_id }}">{{ r.zone.name }} / {{ r.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto d-flex align-items-center">
+    <button type="button" id="btn_flt_reset" class="btn btn-sm btn-outline-secondary">Zurücksetzen</button>
+  </div>
+  <div class="col-auto d-flex align-items-center">
+    <small class="text-muted" id="flt_count"></small>
+  </div>
+</div>
+
+<div class="list-group" id="gestell_liste">
   {% for gestell in gestelle %}
-  <div class="list-group-item d-flex justify-content-between align-items-center">
+  <div class="list-group-item d-flex justify-content-between align-items-center"
+       data-zone="{{ gestell.raum.zone_id }}"
+       data-raum="{{ gestell.raum_id }}">
     <a href="{{ url_for('standort.gestell_detail', id=gestell.id) }}"
        class="text-decoration-none text-body flex-grow-1">
       <span class="badge bg-secondary me-2">{{ gestell.raum.zone.name }} / {{ gestell.raum.name }}</span>
@@ -45,4 +73,50 @@
   <div class="list-group-item text-muted">Noch keine Gestelle erfasst.</div>
   {% endfor %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const fltZone = document.getElementById('flt_zone');
+  const fltRaum = document.getElementById('flt_raum');
+  const items   = document.querySelectorAll('#gestell_liste .list-group-item[data-zone]');
+  const count   = document.getElementById('flt_count');
+  const savedRaumOpts = [...fltRaum.options].slice(1);
+
+  function filterRaumOpts(zoneId) {
+    const cur = fltRaum.value;
+    while (fltRaum.options.length > 1) fltRaum.remove(1);
+    savedRaumOpts.filter(o => !zoneId || o.dataset.zone === zoneId)
+                 .forEach(o => fltRaum.add(o.cloneNode(true)));
+    if ([...fltRaum.options].some(o => o.value === cur)) fltRaum.value = cur;
+  }
+
+  function applyFilters() {
+    const zoneId = fltZone.value;
+    const raumId = fltRaum.value;
+    let visible = 0;
+    items.forEach(item => {
+      const show = (!zoneId || item.dataset.zone === zoneId) &&
+                   (!raumId || item.dataset.raum === raumId);
+      item.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    count.textContent = (zoneId || raumId) ? `${visible} von ${items.length}` : '';
+  }
+
+  fltZone.addEventListener('change', function () {
+    filterRaumOpts(this.value);
+    fltRaum.value = '';
+    applyFilters();
+  });
+
+  fltRaum.addEventListener('change', applyFilters);
+
+  document.getElementById('btn_flt_reset').addEventListener('click', function () {
+    fltZone.value = '';
+    filterRaumOpts('');
+    fltRaum.value = '';
+    applyFilters();
+  });
+});
+</script>
 {% endblock %}
