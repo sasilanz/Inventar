@@ -82,6 +82,7 @@ def _formular_daten():
     return dict(
         kategorien=Kategorie.query.order_by(Kategorie.name).all(),
         alle_tags=Tag.query.order_by(Tag.name).all(),
+        zonen=Zone.query.order_by(Zone.name).all(),
         raeume=Raum.query.join(Zone).order_by(Zone.name, Raum.name).all(),
         gestelle=Gestell.query.order_by(Gestell.name).all(),
         regalfaecher=Regalfach.query.all(),

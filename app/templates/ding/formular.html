@@ -29,35 +29,69 @@
     <div class="col-12 mt-2">
       <h5 class="border-bottom pb-1">Standort <small class="text-muted fw-normal">(eines auswählen)</small></h5>
     </div>
+
+    {# Filter-Zeile: Zone + Raum #}
+    <div class="col-12 col-md-4">
+      <label class="form-label text-muted small">Zone <span class="text-muted">(Filter)</span></label>
+      <select id="flt_zone" class="form-select form-select-sm">
+        <option value="">– alle Zonen –</option>
+        {% for z in zonen %}
+        <option value="{{ z.id }}">{{ z.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-4">
+      <label class="form-label text-muted small">Raum <span class="text-muted">(Filter)</span></label>
+      <select id="flt_raum" class="form-select form-select-sm">
+        <option value="">– alle Räume –</option>
+        {% for r in raeume %}
+        <option value="{{ r.id }}" data-zone="{{ r.zone_id }}">{{ r.zone.name }} / {{ r.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-4 d-flex align-items-end">
+      <button type="button" id="btn_flt_reset" class="btn btn-sm btn-outline-secondary">Filter zurücksetzen</button>
+    </div>
+
+    {# Standort-Selects #}
     <div class="col-12 col-md-4">
       <label class="form-label">In Behälter</label>
-      <select name="behaelter_id" class="form-select">
+      <select name="behaelter_id" id="sel_behaelter" class="form-select">
         <option value="">– kein –</option>
         {% for b in behaelter %}
-        <option value="{{ b.id }}" {{ 'selected' if ding and ding.behaelter_id == b.id }}>
-          {{ b.name }}
-          {% if b.regalfach %} · {{ b.regalfach.gestell.name }}{% endif %}
+          {% set eff_raum = b.raum if b.raum_id else (b.gestell.raum if b.gestell_id else (b.regalfach.gestell.raum if b.regalfach_id else none)) %}
+        <option value="{{ b.id }}"
+                data-raum="{{ eff_raum.id if eff_raum else '' }}"
+                data-zone="{{ eff_raum.zone_id if eff_raum else '' }}"
+                {{ 'selected' if ding and ding.behaelter_id == b.id }}>
+          {{ b.name }}{% if b.regalfach %} · {{ b.regalfach.gestell.name }}{% elif b.gestell %} · {{ b.gestell.name }}{% endif %}
         </option>
         {% endfor %}
       </select>
     </div>
     <div class="col-12 col-md-4">
       <label class="form-label">Direkt im Gestell</label>
-      <select name="gestell_id" class="form-select">
+      <select name="gestell_id" id="sel_gestell" class="form-select">
         <option value="">– kein –</option>
         {% for g in gestelle %}
-        <option value="{{ g.id }}" {{ 'selected' if ding and ding.gestell_id == g.id }}>
+        <option value="{{ g.id }}"
+                data-raum="{{ g.raum_id }}"
+                data-zone="{{ g.raum.zone_id }}"
+                {{ 'selected' if ding and ding.gestell_id == g.id }}>
           {{ g.raum.name }} / {{ g.name }}
         </option>
         {% endfor %}
       </select>
     </div>
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-4" id="div_regalfach" style="display:none">
       <label class="form-label">In Regalfach</label>
-      <select name="regalfach_id" class="form-select">
+      <select name="regalfach_id" id="sel_regalfach" class="form-select">
         <option value="">– kein –</option>
         {% for f in regalfaecher %}
-        <option value="{{ f.id }}" {{ 'selected' if ding and ding.regalfach_id == f.id }}>
+        <option value="{{ f.id }}"
+                data-raum="{{ f.gestell.raum_id }}"
+                data-zone="{{ f.gestell.raum.zone_id }}"
+                {{ 'selected' if ding and ding.regalfach_id == f.id }}>
           {{ f.gestell.raum.name }} / {{ f.gestell.name }} / {{ f.bezeichnung }}
         </option>
         {% endfor %}
@@ -65,10 +99,12 @@
     </div>
     <div class="col-12 col-md-4">
       <label class="form-label">Frei im Raum</label>
-      <select name="raum_id" class="form-select">
+      <select name="raum_id" id="sel_raum" class="form-select">
         <option value="">– kein –</option>
         {% for r in raeume %}
-        <option value="{{ r.id }}" {{ 'selected' if ding and ding.raum_id == r.id }}>
+        <option value="{{ r.id }}"
+                data-zone="{{ r.zone_id }}"
+                {{ 'selected' if ding and ding.raum_id == r.id }}>
           {{ r.zone.name }} / {{ r.name }}
         </option>
         {% endfor %}
@@ -174,4 +210,66 @@
 
   </div>
 </form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const fltZone = document.getElementById('flt_zone');
+  const fltRaum = document.getElementById('flt_raum');
+
+  const targets = [
+    document.getElementById('sel_behaelter'),
+    document.getElementById('sel_gestell'),
+    document.getElementById('sel_regalfach'),
+    document.getElementById('sel_raum'),
+  ];
+
+  // Snapshot aller Optionen (ohne die erste "– kein –"-Option)
+  const savedOpts = targets.map(sel => [...sel.options].slice(1));
+  const savedRaumFltOpts = [...fltRaum.options].slice(1);
+
+  function filterSelect(sel, opts, fn) {
+    const cur = sel.value;
+    while (sel.options.length > 1) sel.remove(1);
+    opts.filter(fn).forEach(o => sel.add(o.cloneNode(true)));
+    if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
+  }
+
+  const divRegalfach = document.getElementById('div_regalfach');
+
+  function applyFilters() {
+    const zoneId = fltZone.value;
+    const raumId = fltRaum.value;
+    targets.forEach((sel, i) => {
+      filterSelect(sel, savedOpts[i], o =>
+        (!zoneId || o.dataset.zone === zoneId) &&
+        (!raumId || o.dataset.raum === raumId || (sel.id === 'sel_raum' && o.value === raumId))
+      );
+    });
+    // Regalfach nur anzeigen wenn nach Filter noch Optionen vorhanden
+    const selRF = document.getElementById('sel_regalfach');
+    divRegalfach.style.display = selRF.options.length > 1 ? '' : 'none';
+    if (selRF.options.length <= 1) selRF.value = '';
+  }
+
+  // Beim Laden: Regalfach-Block sichtbar wenn Optionen vorhanden (z.B. beim Bearbeiten)
+  const selRFInit = document.getElementById('sel_regalfach');
+  divRegalfach.style.display = selRFInit.options.length > 1 ? '' : 'none';
+
+  fltZone.addEventListener('change', function () {
+    const zoneId = this.value;
+    filterSelect(fltRaum, savedRaumFltOpts, o => !zoneId || o.dataset.zone === zoneId);
+    fltRaum.value = '';
+    applyFilters();
+  });
+
+  fltRaum.addEventListener('change', applyFilters);
+
+  document.getElementById('btn_flt_reset').addEventListener('click', function () {
+    fltZone.value = '';
+    filterSelect(fltRaum, savedRaumFltOpts, () => true);
+    fltRaum.value = '';
+    applyFilters();
+  });
+});
+</script>
 {% endblock %}
