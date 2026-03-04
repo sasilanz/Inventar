@@ -57,6 +57,11 @@
           {{ ding.regalfach.gestell.raum.name }} /
           {{ ding.regalfach.gestell.name }} /
           {{ ding.regalfach.bezeichnung }}
+        {% elif ding.gestell %}
+          <i class="bi bi-bookshelf"></i>
+          {{ ding.gestell.raum.zone.name }} /
+          {{ ding.gestell.raum.name }} /
+          {{ ding.gestell.name }}
         {% elif ding.raum %}
           <i class="bi bi-door-open"></i>
           {{ ding.raum.zone.name }} / {{ ding.raum.name }}
