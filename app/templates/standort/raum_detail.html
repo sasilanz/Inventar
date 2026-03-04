@@ -2,19 +2,33 @@
 {% block title %}{{ raum.name }}{% endblock %}
 {% block content %}
 
+{% set back = url_for('standort.raum_detail', id=raum.id) %}
+
 <div class="d-flex justify-content-between align-items-start mb-3">
   <div>
     <h1><i class="bi bi-door-open"></i> {{ raum.name }}</h1>
     <p class="text-muted mb-0">{{ raum.zone.name }}</p>
   </div>
-  <div class="d-flex gap-2">
+  <div class="d-flex gap-2 flex-wrap justify-content-end">
     <a href="{{ url_for('qr.raum_qr', id=raum.id) }}" target="_blank"
-       class="btn btn-outline-secondary">
+       class="btn btn-outline-secondary btn-sm">
       <i class="bi bi-qr-code"></i> QR
     </a>
     <a href="{{ url_for('standort.raum_bearbeiten', id=raum.id) }}"
-       class="btn btn-outline-secondary">
-      <i class="bi bi-pencil"></i>
+       class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-pencil"></i> Raum
+    </a>
+    <a href="{{ url_for('standort.gestell_neu', raum_id=raum.id, next=back) }}"
+       class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-plus-lg"></i> Gestell
+    </a>
+    <a href="{{ url_for('standort.behaelter_neu', raum_id=raum.id, next=back) }}"
+       class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-plus-lg"></i> Behälter
+    </a>
+    <a href="{{ url_for('ding.neu') }}"
+       class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-plus-lg"></i> Ding
     </a>
   </div>
 </div>
@@ -22,83 +36,166 @@
 {# QR-Code #}
 <div class="mb-4">
   <img src="{{ url_for('qr.raum_qr', id=raum.id) }}"
-       width="140" height="140" alt="QR-Code">
+       width="120" height="120" alt="QR-Code">
   <p class="text-muted small mt-1">Scannen → direkt diese Seite</p>
 </div>
 
 {# Gestelle #}
 {% if raum.gestelle %}
-<h5>Gestelle <span class="badge bg-secondary">{{ raum.gestelle|length }}</span></h5>
+<h5 class="mb-2">Gestelle <span class="badge bg-secondary">{{ raum.gestelle|length }}</span></h5>
 <div class="accordion mb-4" id="gestelleAcc">
   {% for gestell in raum.gestelle | sort(attribute='name') %}
   <div class="accordion-item">
-    <h2 class="accordion-header">
-      <button class="accordion-button collapsed" type="button"
-              data-bs-toggle="collapse" data-bs-target="#g{{ gestell.id }}">
-        <i class="bi bi-bookshelf me-2"></i>
-        <strong>{{ gestell.name }}</strong>
-        {% if gestell.typ %}<small class="text-muted ms-2">{{ gestell.typ }}</small>{% endif %}
-        {% if gestell.regalfaecher %}
-          <span class="badge bg-secondary ms-2">{{ gestell.regalfaecher|length }} Fächer</span>
+    <div class="d-flex align-items-stretch">
+      <h2 class="accordion-header flex-grow-1" style="min-width:0">
+        <button class="accordion-button collapsed" type="button"
+                data-bs-toggle="collapse" data-bs-target="#g{{ gestell.id }}">
+          <span class="text-truncate me-2"><strong>{{ gestell.name }}</strong>
+          {% if gestell.typ %}<small class="text-muted ms-1">{{ gestell.typ }}</small>{% endif %}</span>
+          {% if gestell.regalfaecher %}
+            <span class="badge bg-secondary ms-1 flex-shrink-0">{{ gestell.regalfaecher|length }} Fächer</span>
+          {% endif %}
+          {% if gestell.behaelter %}
+            <span class="badge bg-secondary ms-1 flex-shrink-0">{{ gestell.behaelter|length }} Behälter</span>
+          {% endif %}
+          {% if gestell.dinge %}
+            <span class="badge bg-primary ms-1 flex-shrink-0">{{ gestell.dinge|length }} Dinge</span>
+          {% endif %}
+        </button>
+      </h2>
+      <div class="d-flex align-items-center gap-1 px-2 border-bottom border-start bg-light flex-shrink-0">
+        <a href="{{ url_for('standort.gestell_bearbeiten', id=gestell.id, next=back) }}"
+           class="btn btn-sm btn-outline-secondary" title="Gestell bearbeiten">
+          <i class="bi bi-pencil"></i>
+        </a>
+        {% if not gestell.regalfaecher and not gestell.behaelter and not gestell.dinge %}
+        <form method="post" action="{{ url_for('standort.gestell_loeschen', id=gestell.id) }}"
+              onsubmit="return confirm('Gestell löschen?')">
+          <input type="hidden" name="next" value="{{ back }}">
+          <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+        </form>
+        {% else %}
+        <button class="btn btn-sm btn-outline-danger disabled" title="Nicht leer"><i class="bi bi-trash"></i></button>
         {% endif %}
-        {% if gestell.behaelter %}
-          <span class="badge bg-secondary ms-1">{{ gestell.behaelter|length }} Behälter</span>
-        {% endif %}
-        {% if gestell.dinge %}
-          <span class="badge bg-primary ms-1">{{ gestell.dinge|length }} Dinge</span>
-        {% endif %}
-      </button>
-    </h2>
+      </div>
+    </div>
     <div id="g{{ gestell.id }}" class="accordion-collapse collapse">
       <div class="accordion-body p-2">
-        {# Regalfächer #}
-        {% for fach in gestell.regalfaecher %}
-        <div class="mb-2">
-          <a href="{{ url_for('standort.regalfach_detail', id=fach.id) }}"
-             class="fw-bold text-decoration-none">
-            <i class="bi bi-grid me-1"></i>{{ fach.bezeichnung }}
+
+        {# Schnell-Erfassen #}
+        <div class="d-flex gap-2 mb-3 flex-wrap">
+          <a href="{{ url_for('standort.regalfach_neu', gestell_id=gestell.id, next=back) }}"
+             class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-plus-lg"></i> Regalfach
           </a>
-          {% if fach.behaelter %}
-          <ul class="list-unstyled ms-3 mb-0 mt-1">
-            {% for b in fach.behaelter %}
-            <li>
-              <a href="{{ url_for('standort.behaelter_detail', id=b.id) }}"
-                 class="text-decoration-none">
-                <i class="bi bi-box-seam me-1 text-muted"></i>{{ b.name }}
-                <span class="badge bg-light text-dark">{{ b.dinge|length }}</span>
+          <a href="{{ url_for('standort.behaelter_neu', gestell_id=gestell.id, next=back) }}"
+             class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-plus-lg"></i> Behälter
+          </a>
+          <a href="{{ url_for('standort.gestell_detail', id=gestell.id) }}"
+             class="btn btn-sm btn-outline-primary ms-auto">
+            <i class="bi bi-box-arrow-in-right"></i> Detail
+          </a>
+        </div>
+
+        {# Regalfächer #}
+        {% for fach in gestell.regalfaecher | sort(attribute='position_index') %}
+        <div class="mb-2 border rounded p-2">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <a href="{{ url_for('standort.regalfach_detail', id=fach.id) }}"
+               class="fw-bold text-decoration-none">
+              <i class="bi bi-grid me-1"></i>{{ fach.bezeichnung }}
+            </a>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('standort.behaelter_neu', regalfach_id=fach.id, next=back) }}"
+                 class="btn btn-sm btn-outline-secondary" title="Behälter im Fach hinzufügen">
+                <i class="bi bi-plus-lg"></i>
               </a>
+              <a href="{{ url_for('standort.regalfach_bearbeiten', id=fach.id, next=back) }}"
+                 class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-pencil"></i>
+              </a>
+              {% if not fach.behaelter and not fach.dinge %}
+              <form method="post" action="{{ url_for('standort.regalfach_loeschen', id=fach.id) }}"
+                    onsubmit="return confirm('Regalfach löschen?')">
+                <input type="hidden" name="next" value="{{ back }}">
+                <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+              </form>
+              {% else %}
+              <button class="btn btn-sm btn-outline-danger disabled"><i class="bi bi-trash"></i></button>
+              {% endif %}
+            </div>
+          </div>
+          {% if fach.behaelter %}
+          <ul class="list-unstyled ms-3 mb-0">
+            {% for b in fach.behaelter %}
+            <li class="d-flex align-items-center justify-content-between py-1">
+              <a href="{{ url_for('standort.behaelter_detail', id=b.id) }}" class="text-decoration-none">
+                <i class="bi bi-box-seam me-1 text-muted"></i>{{ b.name }}
+                <span class="badge bg-light text-dark ms-1">{{ b.dinge|length }}</span>
+              </a>
+              <div class="d-flex gap-1">
+                <a href="{{ url_for('standort.behaelter_bearbeiten', id=b.id, next=back) }}"
+                   class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                {% if not b.dinge %}
+                <form method="post" action="{{ url_for('standort.behaelter_loeschen', id=b.id) }}"
+                      onsubmit="return confirm('Behälter löschen?')">
+                  <input type="hidden" name="next" value="{{ back }}">
+                  <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                </form>
+                {% else %}
+                <button class="btn btn-sm btn-outline-danger disabled"><i class="bi bi-trash"></i></button>
+                {% endif %}
+              </div>
             </li>
             {% endfor %}
           </ul>
           {% endif %}
         </div>
         {% endfor %}
-        {# Direkte Behälter im Gestell (ohne Regalfach) #}
+
+        {# Behälter direkt im Gestell #}
         {% if gestell.behaelter %}
         {% if gestell.regalfaecher %}<hr class="my-2">{% endif %}
         {% for b in gestell.behaelter | sort(attribute='name') %}
-        <div class="mb-1">
-          <a href="{{ url_for('standort.behaelter_detail', id=b.id) }}"
-             class="text-decoration-none">
+        <div class="d-flex align-items-center justify-content-between py-1">
+          <a href="{{ url_for('standort.behaelter_detail', id=b.id) }}" class="text-decoration-none">
             <i class="bi bi-box-seam me-1 text-muted"></i>
-            <span class="fw-bold">{{ b.name }}</span>
+            <strong>{{ b.name }}</strong>
             {% if b.typ %}<small class="text-muted ms-1">({{ b.typ }})</small>{% endif %}
             <span class="badge bg-light text-dark ms-1">{{ b.dinge|length }}</span>
           </a>
+          <div class="d-flex gap-1">
+            <a href="{{ url_for('standort.behaelter_bearbeiten', id=b.id, next=back) }}"
+               class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+            {% if not b.dinge %}
+            <form method="post" action="{{ url_for('standort.behaelter_loeschen', id=b.id) }}"
+                  onsubmit="return confirm('Behälter löschen?')">
+              <input type="hidden" name="next" value="{{ back }}">
+              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+            </form>
+            {% else %}
+            <button class="btn btn-sm btn-outline-danger disabled"><i class="bi bi-trash"></i></button>
+            {% endif %}
+          </div>
         </div>
         {% endfor %}
         {% endif %}
+
         {# Dinge direkt im Gestell #}
         {% if gestell.dinge %}
         {% if gestell.regalfaecher or gestell.behaelter %}<hr class="my-2">{% endif %}
         {% for ding in gestell.dinge | sort(attribute='name') %}
-        <div class="mb-1">
+        <div class="d-flex align-items-center justify-content-between py-1">
           <a href="{{ url_for('ding.detail', id=ding.id) }}" class="text-decoration-none">
             <i class="bi bi-tag me-1 text-muted"></i>{{ ding.name }}
           </a>
+          <a href="{{ url_for('ding.bearbeiten', id=ding.id) }}"
+             class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
         </div>
         {% endfor %}
         {% endif %}
+
         {% if not gestell.regalfaecher and not gestell.behaelter and not gestell.dinge %}
         <span class="text-muted small">Leer.</span>
         {% endif %}
@@ -110,41 +207,56 @@
 {% endif %}
 
 {# Behälter direkt im Raum #}
-{% set direkte_behaelter = raum.behaelter | selectattr('regalfach_id', 'none') | list %}
+{% set direkte_behaelter = raum.behaelter | selectattr('gestell_id', 'none') | selectattr('regalfach_id', 'none') | list %}
 {% if direkte_behaelter %}
-<h5>Behälter direkt im Raum <span class="badge bg-secondary">{{ direkte_behaelter|length }}</span></h5>
+<h5 class="mb-2">Behälter direkt im Raum <span class="badge bg-secondary">{{ direkte_behaelter|length }}</span></h5>
 <div class="list-group mb-4">
   {% for b in direkte_behaelter | sort(attribute='name') %}
-  <a href="{{ url_for('standort.behaelter_detail', id=b.id) }}"
-     class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-    <div>
+  <div class="list-group-item d-flex justify-content-between align-items-center">
+    <a href="{{ url_for('standort.behaelter_detail', id=b.id) }}" class="text-decoration-none flex-grow-1">
       <i class="bi bi-box-seam me-2 text-muted"></i>
-      <span class="fw-bold">{{ b.name }}</span>
+      <strong>{{ b.name }}</strong>
       <span class="badge bg-light text-dark ms-2">{{ b.dinge|length }} Dinge</span>
+    </a>
+    <div class="d-flex gap-1 ms-2">
+      <a href="{{ url_for('standort.behaelter_bearbeiten', id=b.id, next=back) }}"
+         class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+      {% if not b.dinge %}
+      <form method="post" action="{{ url_for('standort.behaelter_loeschen', id=b.id) }}"
+            onsubmit="return confirm('Behälter löschen?')">
+        <input type="hidden" name="next" value="{{ back }}">
+        <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+      </form>
+      {% else %}
+      <button class="btn btn-sm btn-outline-danger disabled"><i class="bi bi-trash"></i></button>
+      {% endif %}
     </div>
-    <i class="bi bi-chevron-right text-muted"></i>
-  </a>
+  </div>
   {% endfor %}
 </div>
 {% endif %}
 
 {# Dinge frei im Raum #}
 {% if raum.dinge %}
-<h5>Dinge frei im Raum <span class="badge bg-secondary">{{ raum.dinge|length }}</span></h5>
-<div class="list-group">
+<h5 class="mb-2">Dinge frei im Raum <span class="badge bg-secondary">{{ raum.dinge|length }}</span></h5>
+<div class="list-group mb-4">
   {% for ding in raum.dinge | sort(attribute='name') %}
-  <a href="{{ url_for('ding.detail', id=ding.id) }}"
-     class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-    <div>
-      <span class="fw-bold">{{ ding.name }}</span>
+  <div class="list-group-item d-flex justify-content-between align-items-center">
+    <a href="{{ url_for('ding.detail', id=ding.id) }}" class="text-decoration-none flex-grow-1">
+      <strong>{{ ding.name }}</strong>
       {% if ding.kategorie %}
         <span class="badge bg-primary ms-2">{{ ding.kategorie.name }}</span>
       {% endif %}
-    </div>
-    <i class="bi bi-chevron-right text-muted"></i>
-  </a>
+    </a>
+    <a href="{{ url_for('ding.bearbeiten', id=ding.id) }}"
+       class="btn btn-sm btn-outline-secondary ms-2"><i class="bi bi-pencil"></i></a>
+  </div>
   {% endfor %}
 </div>
+{% endif %}
+
+{% if not raum.gestelle and not raum.behaelter and not raum.dinge %}
+<p class="text-muted">Dieser Raum ist noch leer.</p>
 {% endif %}
 
 {% endblock %}

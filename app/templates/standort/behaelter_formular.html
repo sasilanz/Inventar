@@ -4,6 +4,7 @@
 <h1>{{ 'Behälter bearbeiten' if behaelter else 'Neuer Behälter' }}</h1>
 
 <form method="post" class="mt-3" style="max-width:520px">
+  {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
 
   <div class="mb-3">
     <label class="form-label">Name *</label>
@@ -23,13 +24,13 @@
       <div class="form-check">
         <input class="form-check-input" type="radio" name="standort_typ" id="st_gestell"
                value="gestell" onchange="zeigeStandort(this.value)"
-               {{ 'checked' if (behaelter and behaelter.gestell_id) or (not behaelter) }}>
+               {{ 'checked' if (behaelter and behaelter.gestell_id) or (not behaelter and not prefill_regalfach_id) }}>
         <label class="form-check-label" for="st_gestell">In Gestell</label>
       </div>
       <div class="form-check">
         <input class="form-check-input" type="radio" name="standort_typ" id="st_regalfach"
                value="regalfach" onchange="zeigeStandort(this.value)"
-               {{ 'checked' if behaelter and behaelter.regalfach_id }}>
+               {{ 'checked' if (behaelter and behaelter.regalfach_id) or (not behaelter and prefill_regalfach_id) }}>
         <label class="form-check-label" for="st_regalfach">In Regalfach</label>
       </div>
       <div class="form-check">
@@ -52,7 +53,7 @@
         <option value="">– Gestell wählen –</option>
         {% for gestell in gestelle %}
         <option value="{{ gestell.id }}" data-raum="{{ gestell.raum_id }}"
-          {{ 'selected' if behaelter and behaelter.gestell_id == gestell.id }}>
+          {{ 'selected' if (behaelter and behaelter.gestell_id == gestell.id) or (not behaelter and prefill_gestell_id == gestell.id) }}>
           {{ gestell.raum.name }} / {{ gestell.name }}
         </option>
         {% endfor %}
@@ -81,7 +82,7 @@
         <option value="{{ fach.id }}"
                 data-gestell="{{ fach.gestell_id }}"
                 data-raum="{{ fach.gestell.raum_id }}"
-          {{ 'selected' if behaelter and behaelter.regalfach_id == fach.id }}>
+          {{ 'selected' if (behaelter and behaelter.regalfach_id == fach.id) or (not behaelter and prefill_regalfach_id == fach.id) }}>
           {{ fach.gestell.name }} / {{ fach.bezeichnung }}
         </option>
         {% endfor %}
@@ -109,7 +110,7 @@
 
   <div class="d-flex gap-2">
     <button type="submit" class="btn btn-primary">Speichern</button>
-    <a href="{{ url_for('standort.behaelter_liste') }}" class="btn btn-outline-secondary">Abbrechen</a>
+    <a href="{{ next_url or url_for('standort.behaelter_liste') }}" class="btn btn-outline-secondary">Abbrechen</a>
   </div>
 </form>
 

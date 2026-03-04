@@ -117,6 +117,7 @@ def gestell_liste():
 @standort_bp.route('/gestelle/neu', methods=['GET', 'POST'])
 def gestell_neu():
     raeume = Raum.query.join(Zone).order_by(Zone.name, Raum.name).all()
+    prefill_raum_id = request.args.get('raum_id', type=int)
     if request.method == 'POST':
         gestell = Gestell(
             raum_id=request.form['raum_id'],
@@ -130,8 +131,11 @@ def gestell_neu():
                                 nach_beschreibung=gestell.standort_beschreibung()))
         db.session.commit()
         flash('Gestell gespeichert.', 'success')
-        return redirect(url_for('standort.gestell_liste'))
-    return render_template('standort/gestell_formular.html', gestell=None, raeume=raeume)
+        next_url = request.form.get('next')
+        return redirect(next_url or url_for('standort.gestell_liste'))
+    return render_template('standort/gestell_formular.html', gestell=None, raeume=raeume,
+                           prefill_raum_id=prefill_raum_id,
+                           next_url=request.args.get('next', ''))
 
 
 @standort_bp.route('/gestelle/<int:id>/bearbeiten', methods=['GET', 'POST'])
@@ -150,17 +154,24 @@ def gestell_bearbeiten(id):
             db.session.add(Bewegung(gestell_id=gestell.id, von_beschreibung=von, nach_beschreibung=nach))
         db.session.commit()
         flash('Gestell aktualisiert.', 'success')
-        return redirect(url_for('standort.gestell_liste'))
-    return render_template('standort/gestell_formular.html', gestell=gestell, raeume=raeume)
+        next_url = request.form.get('next')
+        return redirect(next_url or url_for('standort.gestell_liste'))
+    return render_template('standort/gestell_formular.html', gestell=gestell, raeume=raeume,
+                           next_url=request.args.get('next', ''))
 
 
 @standort_bp.route('/gestelle/<int:id>/loeschen', methods=['POST'])
 def gestell_loeschen(id):
     gestell = Gestell.query.get_or_404(id)
-    db.session.delete(gestell)
-    db.session.commit()
-    flash(f'Gestell „{gestell.name}" gelöscht.', 'warning')
-    return redirect(url_for('standort.gestell_liste'))
+    next_url = request.form.get('next') or url_for('standort.gestell_liste')
+    if gestell.regalfaecher or gestell.behaelter or gestell.dinge:
+        flash(f'Gestell „{gestell.name}" kann nicht gelöscht werden – enthält noch Einträge.', 'danger')
+    else:
+        name = gestell.name
+        db.session.delete(gestell)
+        db.session.commit()
+        flash(f'Gestell „{name}" gelöscht.', 'warning')
+    return redirect(next_url)
 
 
 # ── Regalfach ──────────────────────────────────────────────────────────────
@@ -174,6 +185,7 @@ def regalfach_liste():
 @standort_bp.route('/regalfaecher/neu', methods=['GET', 'POST'])
 def regalfach_neu():
     gestelle = Gestell.query.join(Raum).order_by(Raum.name, Gestell.name).all()
+    prefill_gestell_id = request.args.get('gestell_id', type=int)
     if request.method == 'POST':
         fach = Regalfach(
             gestell_id=request.form['gestell_id'],
@@ -183,8 +195,11 @@ def regalfach_neu():
         db.session.add(fach)
         db.session.commit()
         flash('Regalfach gespeichert.', 'success')
-        return redirect(url_for('standort.regalfach_liste'))
-    return render_template('standort/regalfach_formular.html', fach=None, gestelle=gestelle)
+        next_url = request.form.get('next')
+        return redirect(next_url or url_for('standort.regalfach_liste'))
+    return render_template('standort/regalfach_formular.html', fach=None, gestelle=gestelle,
+                           prefill_gestell_id=prefill_gestell_id,
+                           next_url=request.args.get('next', ''))
 
 
 @standort_bp.route('/regalfaecher/<int:id>/bearbeiten', methods=['GET', 'POST'])
@@ -197,17 +212,24 @@ def regalfach_bearbeiten(id):
         fach.position_index = request.form.get('position_index') or 0
         db.session.commit()
         flash('Regalfach aktualisiert.', 'success')
-        return redirect(url_for('standort.regalfach_liste'))
-    return render_template('standort/regalfach_formular.html', fach=fach, gestelle=gestelle)
+        next_url = request.form.get('next')
+        return redirect(next_url or url_for('standort.regalfach_liste'))
+    return render_template('standort/regalfach_formular.html', fach=fach, gestelle=gestelle,
+                           next_url=request.args.get('next', ''))
 
 
 @standort_bp.route('/regalfaecher/<int:id>/loeschen', methods=['POST'])
 def regalfach_loeschen(id):
     fach = Regalfach.query.get_or_404(id)
-    db.session.delete(fach)
-    db.session.commit()
-    flash(f'Regalfach „{fach.bezeichnung}" gelöscht.', 'warning')
-    return redirect(url_for('standort.regalfach_liste'))
+    next_url = request.form.get('next') or url_for('standort.regalfach_liste')
+    if fach.behaelter or fach.dinge:
+        flash(f'Regalfach „{fach.bezeichnung}" kann nicht gelöscht werden – enthält noch Einträge.', 'danger')
+    else:
+        bezeichnung = fach.bezeichnung
+        db.session.delete(fach)
+        db.session.commit()
+        flash(f'Regalfach „{bezeichnung}" gelöscht.', 'warning')
+    return redirect(next_url)
 
 
 # ── Behälter ───────────────────────────────────────────────────────────────
@@ -242,9 +264,15 @@ def behaelter_neu():
             db.session.add(Bewegung(behaelter_id=behaelter.id, von_beschreibung=None, nach_beschreibung=nach))
         db.session.commit()
         flash('Behälter gespeichert.', 'success')
-        return redirect(url_for('standort.behaelter_liste'))
+        next_url = request.form.get('next')
+        return redirect(next_url or url_for('standort.behaelter_liste'))
+    prefill_gestell_id = request.args.get('gestell_id', type=int)
+    prefill_regalfach_id = request.args.get('regalfach_id', type=int)
     return render_template('standort/behaelter_formular.html',
-                            behaelter=None, raeume=raeume, gestelle=gestelle, regalfaecher=regalfaecher)
+                            behaelter=None, raeume=raeume, gestelle=gestelle, regalfaecher=regalfaecher,
+                            prefill_gestell_id=prefill_gestell_id,
+                            prefill_regalfach_id=prefill_regalfach_id,
+                            next_url=request.args.get('next', ''))
 
 
 @standort_bp.route('/behaelter/<int:id>/bearbeiten', methods=['GET', 'POST'])
@@ -267,18 +295,25 @@ def behaelter_bearbeiten(id):
             db.session.add(Bewegung(behaelter_id=behaelter.id, von_beschreibung=von, nach_beschreibung=nach))
         db.session.commit()
         flash('Behälter aktualisiert.', 'success')
-        return redirect(url_for('standort.behaelter_liste'))
+        next_url = request.form.get('next')
+        return redirect(next_url or url_for('standort.behaelter_liste'))
     return render_template('standort/behaelter_formular.html',
-                            behaelter=behaelter, raeume=raeume, gestelle=gestelle, regalfaecher=regalfaecher)
+                            behaelter=behaelter, raeume=raeume, gestelle=gestelle, regalfaecher=regalfaecher,
+                            next_url=request.args.get('next', ''))
 
 
 @standort_bp.route('/behaelter/<int:id>/loeschen', methods=['POST'])
 def behaelter_loeschen(id):
     behaelter = Behaelter.query.get_or_404(id)
-    db.session.delete(behaelter)
-    db.session.commit()
-    flash(f'Behälter „{behaelter.name}" gelöscht.', 'warning')
-    return redirect(url_for('standort.behaelter_liste'))
+    next_url = request.form.get('next') or url_for('standort.behaelter_liste')
+    if behaelter.dinge:
+        flash(f'Behälter „{behaelter.name}" kann nicht gelöscht werden – enthält noch Dinge.', 'danger')
+    else:
+        name = behaelter.name
+        db.session.delete(behaelter)
+        db.session.commit()
+        flash(f'Behälter „{name}" gelöscht.', 'warning')
+    return redirect(next_url)
 
 
 # ── Detail-/Inhaltsseiten ──────────────────────────────────────────────────

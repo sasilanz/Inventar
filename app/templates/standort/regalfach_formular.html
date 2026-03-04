@@ -4,13 +4,14 @@
 <h1>{{ 'Regalfach bearbeiten' if fach else 'Neues Regalfach' }}</h1>
 
 <form method="post" class="mt-3" style="max-width:500px">
+  {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
   <div class="mb-3">
     <label class="form-label">Gestell *</label>
     <select name="gestell_id" class="form-select" required>
       <option value="">– Gestell wählen –</option>
       {% for gestell in gestelle %}
       <option value="{{ gestell.id }}"
-        {{ 'selected' if fach and fach.gestell_id == gestell.id }}>
+        {{ 'selected' if (fach and fach.gestell_id == gestell.id) or (not fach and prefill_gestell_id == gestell.id) }}>
         {{ gestell.raum.zone.name }} / {{ gestell.raum.name }} / {{ gestell.name }}
       </option>
       {% endfor %}
@@ -29,7 +30,7 @@
   </div>
   <div class="d-flex gap-2">
     <button type="submit" class="btn btn-primary">Speichern</button>
-    <a href="{{ url_for('standort.regalfach_liste') }}" class="btn btn-outline-secondary">Abbrechen</a>
+    <a href="{{ next_url or url_for('standort.regalfach_liste') }}" class="btn btn-outline-secondary">Abbrechen</a>
   </div>
 </form>
 {% endblock %}
