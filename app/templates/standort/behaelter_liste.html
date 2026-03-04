@@ -52,7 +52,7 @@
        data-zone="{{ eff_raum.zone_id if eff_raum else '' }}"
        data-raum="{{ eff_raum.id if eff_raum else '' }}"
        data-gestell="{{ eff_gestell.id if eff_gestell else '' }}">
-    <div>
+    <a href="{{ url_for('standort.behaelter_detail', id=b.id) }}" class="text-decoration-none text-body flex-grow-1">
       {% if b.regalfach %}
         <span class="badge bg-secondary me-2">
           {{ b.regalfach.gestell.raum.zone.name }} / {{ b.regalfach.gestell.raum.name }} /
@@ -70,12 +70,8 @@
         <small class="text-muted ms-1">({{ b.typ }})</small>
       {% endif %}
       <span class="badge bg-light text-dark ms-2">{{ b.dinge|length }} Dinge</span>
-    </div>
-    <div class="d-flex gap-1">
-      <a href="{{ url_for('standort.behaelter_detail', id=b.id) }}"
-         class="btn btn-sm btn-outline-primary">
-        <i class="bi bi-box-arrow-in-right"></i>
-      </a>
+    </a>
+    <div class="d-flex gap-1 ms-2">
       <a href="{{ url_for('standort.behaelter_bearbeiten', id=b.id) }}"
          class="btn btn-sm btn-outline-secondary">
         <i class="bi bi-pencil"></i>
