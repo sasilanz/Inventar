@@ -58,8 +58,9 @@
           {% if gestell.behaelter %}
             <span class="badge bg-secondary ms-1 flex-shrink-0">{{ gestell.behaelter|length }} Behälter</span>
           {% endif %}
-          {% if gestell.dinge %}
-            <span class="badge bg-primary ms-1 flex-shrink-0">{{ gestell.dinge|length }} Dinge</span>
+          {% set n_dinge_direkt = gestell.dinge | selectattr('behaelter_id', 'none') | list | length %}
+          {% if n_dinge_direkt %}
+            <span class="badge bg-primary ms-1 flex-shrink-0">{{ n_dinge_direkt }} Dinge</span>
           {% endif %}
         </button>
       </h2>
@@ -68,7 +69,7 @@
            class="btn btn-sm btn-outline-secondary" title="Gestell bearbeiten">
           <i class="bi bi-pencil"></i>
         </a>
-        {% if not gestell.regalfaecher and not gestell.behaelter and not gestell.dinge %}
+        {% if not gestell.regalfaecher and not gestell.behaelter and not (gestell.dinge | selectattr('behaelter_id', 'none') | list) %}
         <form method="post" action="{{ url_for('standort.gestell_loeschen', id=gestell.id) }}"
               onsubmit="return confirm('Gestell löschen?')">
           <input type="hidden" name="next" value="{{ back }}">
@@ -182,10 +183,11 @@
         {% endfor %}
         {% endif %}
 
-        {# Dinge direkt im Gestell #}
-        {% if gestell.dinge %}
+        {# Dinge direkt im Gestell (ohne Behälter) #}
+        {% set dinge_direkt = gestell.dinge | selectattr('behaelter_id', 'none') | list %}
+        {% if dinge_direkt %}
         {% if gestell.regalfaecher or gestell.behaelter %}<hr class="my-2">{% endif %}
-        {% for ding in gestell.dinge | sort(attribute='name') %}
+        {% for ding in dinge_direkt | sort(attribute='name') %}
         <div class="d-flex align-items-center justify-content-between py-1">
           <a href="{{ url_for('ding.detail', id=ding.id) }}" class="text-decoration-none">
             <i class="bi bi-tag me-1 text-muted"></i>{{ ding.name }}
@@ -196,7 +198,7 @@
         {% endfor %}
         {% endif %}
 
-        {% if not gestell.regalfaecher and not gestell.behaelter and not gestell.dinge %}
+        {% if not gestell.regalfaecher and not gestell.behaelter and not dinge_direkt %}
         <span class="text-muted small">Leer.</span>
         {% endif %}
       </div>
