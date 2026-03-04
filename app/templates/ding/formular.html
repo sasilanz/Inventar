@@ -264,6 +264,23 @@
 
   fltRaum.addEventListener('change', applyFilters);
 
+  // Standort-Selects gegenseitig ausschliessen
+  const standortSelects = [
+    document.getElementById('sel_behaelter'),
+    document.getElementById('sel_gestell'),
+    document.getElementById('sel_regalfach'),
+    document.getElementById('sel_raum'),
+  ];
+  standortSelects.forEach(function(sel) {
+    sel.addEventListener('change', function() {
+      if (this.value) {
+        standortSelects.forEach(function(other) {
+          if (other !== sel) other.value = '';
+        });
+      }
+    });
+  });
+
   document.getElementById('btn_flt_reset').addEventListener('click', function () {
     fltZone.value = '';
     filterSelect(fltRaum, savedRaumFltOpts, () => true);

@@ -123,11 +123,19 @@ def _ding_aus_formular(ding, form):
     ding.modell = form.get('modell') or None
     ding.seriennummer = form.get('seriennummer') or None
     ding.kategorie_id = form.get('kategorie_id') or None
-    # Standort: genau eines setzen, Rest auf None
-    ding.raum_id = form.get('raum_id') or None
-    ding.gestell_id = form.get('gestell_id') or None
-    ding.regalfach_id = form.get('regalfach_id') or None
-    ding.behaelter_id = form.get('behaelter_id') or None
+    # Standort: genau eines setzen, Priorität: Behälter > Regalfach > Gestell > Raum
+    behaelter_id = form.get('behaelter_id') or None
+    regalfach_id = form.get('regalfach_id') or None
+    gestell_id   = form.get('gestell_id') or None
+    raum_id      = form.get('raum_id') or None
+    if behaelter_id:
+        ding.behaelter_id, ding.regalfach_id, ding.gestell_id, ding.raum_id = behaelter_id, None, None, None
+    elif regalfach_id:
+        ding.behaelter_id, ding.regalfach_id, ding.gestell_id, ding.raum_id = None, regalfach_id, None, None
+    elif gestell_id:
+        ding.behaelter_id, ding.regalfach_id, ding.gestell_id, ding.raum_id = None, None, gestell_id, None
+    else:
+        ding.behaelter_id, ding.regalfach_id, ding.gestell_id, ding.raum_id = None, None, None, raum_id
     # Versicherung
     ding.kaufdatum = form.get('kaufdatum') or None
     ding.kaufpreis = form.get('kaufpreis') or None
