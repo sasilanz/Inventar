@@ -30,6 +30,14 @@
        class="btn btn-outline-secondary">
       <i class="bi bi-pencil"></i>
     </a>
+    {% if not behaelter.dinge %}
+    <form method="post" action="{{ url_for('standort.behaelter_loeschen', id=behaelter.id) }}"
+          onsubmit="return confirm('Behälter „{{ behaelter.name }}" wirklich löschen?')">
+      <button class="btn btn-outline-danger">
+        <i class="bi bi-trash"></i>
+      </button>
+    </form>
+    {% endif %}
   </div>
 </div>
 
