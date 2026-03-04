@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from app import db
 from app.models.standort import Raum, Gestell, Regalfach, Behaelter, Zone
 from app.models.inventar import Kategorie, Tag, Ding
@@ -46,9 +46,11 @@ def neu():
         if nach != 'Kein Standort':
             db.session.add(Bewegung(ding_id=ding.id, von_beschreibung=None, nach_beschreibung=nach))
         db.session.commit()
+        session['last_standort'] = _standort_fuer_session(ding)
         flash('Ding gespeichert.', 'success')
         return redirect(url_for('ding.detail', id=ding.id))
-    return render_template('ding/formular.html', ding=None, **_formular_daten())
+    prefill = session.get('last_standort', {})
+    return render_template('ding/formular.html', ding=None, prefill=prefill, **_formular_daten())
 
 
 @ding_bp.route('/<int:id>/bearbeiten', methods=['GET', 'POST'])
@@ -76,6 +78,30 @@ def loeschen(id):
     db.session.commit()
     flash(f'„{name}" gelöscht.', 'warning')
     return redirect(url_for('ding.liste'))
+
+
+def _standort_fuer_session(ding):
+    """Ermittelt Zone/Raum/Standort-IDs für Session-Prefill beim nächsten Ding."""
+    ls = {}
+    if ding.behaelter_id:
+        b = ding.behaelter
+        eff_raum = b.raum or (b.gestell.raum if b.gestell else (b.regalfach.gestell.raum if b.regalfach else None))
+        if eff_raum:
+            ls['zone_id'] = str(eff_raum.zone_id)
+            ls['raum_id'] = str(eff_raum.id)
+        ls['behaelter_id'] = str(ding.behaelter_id)
+    elif ding.gestell_id:
+        ls['zone_id'] = str(ding.gestell.raum.zone_id)
+        ls['raum_id'] = str(ding.gestell.raum_id)
+        ls['gestell_id'] = str(ding.gestell_id)
+    elif ding.regalfach_id:
+        ls['zone_id'] = str(ding.regalfach.gestell.raum.zone_id)
+        ls['raum_id'] = str(ding.regalfach.gestell.raum_id)
+        ls['regalfach_id'] = str(ding.regalfach_id)
+    elif ding.raum_id:
+        ls['zone_id'] = str(ding.raum.zone_id)
+        ls['raum_id'] = str(ding.raum_id)
+    return ls
 
 
 def _formular_daten():

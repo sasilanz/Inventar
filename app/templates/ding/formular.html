@@ -270,6 +270,29 @@
     fltRaum.value = '';
     applyFilters();
   });
+
+  // Prefill aus letzter Erfassung (nur neues Ding)
+  {% if prefill is defined and prefill and not ding %}
+  (function() {
+    var pZone = '{{ prefill.get("zone_id", "") }}';
+    var pRaum = '{{ prefill.get("raum_id", "") }}';
+    if (pZone) {
+      fltZone.value = pZone;
+      filterSelect(fltRaum, savedRaumFltOpts, function(o) { return o.dataset.zone === pZone; });
+    }
+    if (pRaum) fltRaum.value = pRaum;
+    if (pZone || pRaum) applyFilters();
+    {% if prefill.get('behaelter_id') %}
+    document.getElementById('sel_behaelter').value = '{{ prefill.get("behaelter_id") }}';
+    {% endif %}
+    {% if prefill.get('gestell_id') %}
+    document.getElementById('sel_gestell').value = '{{ prefill.get("gestell_id") }}';
+    {% endif %}
+    {% if prefill.get('regalfach_id') %}
+    document.getElementById('sel_regalfach').value = '{{ prefill.get("regalfach_id") }}';
+    {% endif %}
+  }());
+  {% endif %}
 }());
 </script>
 {% endblock %}
