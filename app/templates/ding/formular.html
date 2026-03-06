@@ -4,6 +4,7 @@
 <h1>{{ 'Ding bearbeiten' if ding else 'Neues Ding' }}</h1>
 
 <form method="post" class="mt-3">
+  {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
   <div class="row g-3">
 
     {# Basis #}
@@ -198,12 +199,17 @@
     </div>
 
     <div class="col-12 mt-2">
-      <div class="d-flex gap-2">
+      <div class="d-flex gap-2 flex-wrap">
         <button type="submit" class="btn btn-primary">Speichern</button>
+        {% if not ding %}
+          <button type="submit" name="add_another" value="1" class="btn btn-outline-primary">
+            <i class="bi bi-plus-lg me-1"></i>Speichern + weiteres Ding
+          </button>
+        {% endif %}
         {% if ding %}
           <a href="{{ url_for('ding.detail', id=ding.id) }}" class="btn btn-outline-secondary">Abbrechen</a>
         {% else %}
-          <a href="{{ url_for('ding.liste') }}" class="btn btn-outline-secondary">Abbrechen</a>
+          <a href="{{ next_url or url_for('ding.liste') }}" class="btn btn-outline-secondary">Abbrechen</a>
         {% endif %}
       </div>
     </div>

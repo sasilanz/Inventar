@@ -1,96 +1,273 @@
 {% extends 'base.html' %}
 {% block title %}Standorte{% endblock %}
 {% block content %}
+
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h1><i class="bi bi-diagram-3"></i> Standorte</h1>
+  <h1 class="mb-0"><i class="bi bi-diagram-3"></i> Standorte</h1>
+  <a href="{{ url_for('standort.zone_neu') }}?next=/standort" class="btn btn-primary btn-sm">
+    <i class="bi bi-plus-lg me-1"></i>Zone anlegen
+  </a>
 </div>
 
-<div class="row g-3 mb-4">
-  <div class="col-6 col-md-3">
-    <a href="{{ url_for('standort.zone_liste') }}" class="text-decoration-none">
-      <div class="card text-center h-100">
-        <div class="card-body">
-          <div class="fs-1 text-primary"><i class="bi bi-building"></i></div>
-          <div class="fs-4 fw-bold">{{ zonen|length }}</div>
-          <div class="text-muted">Zonen</div>
-        </div>
-      </div>
-    </a>
-  </div>
-  <div class="col-6 col-md-3">
-    <a href="{{ url_for('standort.raum_liste') }}" class="text-decoration-none">
-      <div class="card text-center h-100">
-        <div class="card-body">
-          <div class="fs-1 text-success"><i class="bi bi-door-open"></i></div>
-          <div class="fs-4 fw-bold">{{ raeume }}</div>
-          <div class="text-muted">Räume</div>
-        </div>
-      </div>
-    </a>
-  </div>
-  <div class="col-6 col-md-3">
-    <a href="{{ url_for('standort.gestell_liste') }}" class="text-decoration-none">
-      <div class="card text-center h-100">
-        <div class="card-body">
-          <div class="fs-1 text-warning"><i class="bi bi-bookshelf"></i></div>
-          <div class="fs-4 fw-bold">{{ gestelle }}</div>
-          <div class="text-muted">Gestelle</div>
-        </div>
-      </div>
-    </a>
-  </div>
-  <div class="col-6 col-md-3">
-    <a href="{{ url_for('standort.behaelter_liste') }}" class="text-decoration-none">
-      <div class="card text-center h-100">
-        <div class="card-body">
-          <div class="fs-1 text-danger"><i class="bi bi-box-seam"></i></div>
-          <div class="fs-4 fw-bold">{{ behaelter }}</div>
-          <div class="text-muted">Behälter</div>
-        </div>
-      </div>
-    </a>
-  </div>
+{% if not zonen %}
+<div class="alert alert-info">
+  Noch keine Zonen vorhanden. <a href="{{ url_for('standort.zone_neu') }}?next=/standort">Erste Zone anlegen →</a>
 </div>
+{% endif %}
 
-<h5 class="mt-4">Zonen &amp; Räume</h5>
-<div class="accordion" id="zonenAccordion">
-  {% for zone in zonen %}
-  <div class="accordion-item">
-    <h2 class="accordion-header">
-      <button class="accordion-button collapsed" type="button"
-              data-bs-toggle="collapse" data-bs-target="#zone{{ zone.id }}">
-        <strong>{{ zone.name }}</strong>
-        <span class="badge bg-secondary ms-2">{{ zone.raeume|length }} Räume</span>
-      </button>
-    </h2>
-    <div id="zone{{ zone.id }}" class="accordion-collapse collapse">
-      <div class="accordion-body p-2">
-        {% if zone.raeume %}
-        <ul class="list-unstyled mb-0">
-          {% for raum in zone.raeume %}
-          <li class="py-1 border-bottom">
-            <a href="{{ url_for('standort.raum_detail', id=raum.id) }}" class="text-decoration-none">
-              <i class="bi bi-door-open text-muted me-1"></i>
-              <span class="fw-semibold">{{ raum.name }}</span>
-              {% set n_gestelle = raum.gestelle|length %}
-              {% set n_behaelter = raum.behaelter|selectattr('regalfach_id', 'none')|list|length %}
-              {% set n_dinge = raum.dinge|length %}
-              {% if n_gestelle %}<span class="badge bg-warning text-dark ms-1">{{ n_gestelle }} Gestell{{ 'e' if n_gestelle != 1 }}</span>{% endif %}
-              {% if n_behaelter %}<span class="badge bg-success ms-1">{{ n_behaelter }} Behälter</span>{% endif %}
-              {% if n_dinge %}<span class="badge bg-primary ms-1">{{ n_dinge }} Ding{{ 'e' if n_dinge != 1 }}</span>{% endif %}
-              <i class="bi bi-chevron-right text-muted ms-1 small"></i>
+<style>
+  .tree-header { display:flex; align-items:stretch; }
+  .tree-header .accordion-button { flex:1; }
+  .tree-actions { display:flex; align-items:center; gap:4px; padding:0 8px; border-left:1px solid rgba(0,0,0,.125); white-space:nowrap; }
+  .tree-leaf { display:flex; align-items:center; padding:4px 8px; border-radius:4px; }
+  .tree-leaf:hover { background: rgba(0,0,0,.04); }
+</style>
+
+<div class="accordion" id="acc-root">
+{% for zone in zonen %}
+<div class="accordion-item mb-2">
+
+  <h2 class="accordion-header tree-header">
+    <button class="accordion-button collapsed py-2 fw-bold" type="button"
+            data-bs-toggle="collapse" data-bs-target="#z{{ zone.id }}">
+      <i class="bi bi-geo-alt-fill text-secondary me-2"></i>
+      {{ zone.name }}
+      <span class="badge bg-secondary ms-2 fw-normal">{{ zone.raeume|length }} Raum{{ 'e' if zone.raeume|length != 1 }}</span>
+    </button>
+    <div class="tree-actions">
+      <a href="{{ url_for('standort.raum_neu') }}?zone_id={{ zone.id }}&next=/standort"
+         class="btn btn-sm btn-outline-primary" title="Raum anlegen">
+        <i class="bi bi-plus-lg"></i> Raum
+      </a>
+      <a href="{{ url_for('standort.zone_bearbeiten', id=zone.id) }}?next=/standort"
+         class="btn btn-sm btn-outline-secondary" title="Zone bearbeiten">
+        <i class="bi bi-pencil"></i>
+      </a>
+    </div>
+  </h2>
+
+  <div id="z{{ zone.id }}" class="accordion-collapse collapse">
+    <div class="accordion-body p-2 ps-3">
+
+      {% if not zone.raeume %}
+      <p class="text-muted small mb-2">
+        Keine Räume.
+        <a href="{{ url_for('standort.raum_neu') }}?zone_id={{ zone.id }}&next=/standort">Raum anlegen →</a>
+      </p>
+      {% endif %}
+
+      <div class="accordion accordion-flush" id="acc-z{{ zone.id }}">
+      {% for raum in zone.raeume %}
+      <div class="accordion-item">
+
+        <h2 class="accordion-header tree-header">
+          <button class="accordion-button collapsed py-2" type="button"
+                  data-bs-toggle="collapse" data-bs-target="#r{{ raum.id }}">
+            <i class="bi bi-door-open text-muted me-2"></i>
+            <span class="fw-semibold">{{ raum.name }}</span>
+            {% set n_g = raum.gestelle|length %}
+            {% if n_g %}
+            <span class="badge bg-warning text-dark ms-2 fw-normal">{{ n_g }} Gestell{{ 'e' if n_g != 1 }}</span>
+            {% endif %}
+          </button>
+          <div class="tree-actions">
+            <a href="{{ url_for('standort.gestell_neu') }}?raum_id={{ raum.id }}&next=/standort"
+               class="btn btn-sm btn-outline-warning" title="Gestell anlegen">
+              <i class="bi bi-plus-lg"></i> Gestell
             </a>
-          </li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <span class="text-muted">Keine Räume.</span>
-        {% endif %}
+            <a href="{{ url_for('qr.raum_qr', id=raum.id) }}" target="_blank"
+               class="btn btn-sm btn-outline-secondary" title="QR-Code">
+              <i class="bi bi-qr-code"></i>
+            </a>
+            <a href="{{ url_for('standort.raum_bearbeiten', id=raum.id) }}?next=/standort"
+               class="btn btn-sm btn-outline-secondary" title="Raum bearbeiten">
+              <i class="bi bi-pencil"></i>
+            </a>
+          </div>
+        </h2>
+
+        <div id="r{{ raum.id }}" class="accordion-collapse collapse">
+          <div class="accordion-body p-2 ps-4">
+
+            {% if not raum.gestelle %}
+            <p class="text-muted small mb-2">
+              Keine Gestelle.
+              <a href="{{ url_for('standort.gestell_neu') }}?raum_id={{ raum.id }}&next=/standort">Gestell anlegen →</a>
+            </p>
+            {% endif %}
+
+            <div class="accordion accordion-flush" id="acc-r{{ raum.id }}">
+            {% for gestell in raum.gestelle %}
+            <div class="accordion-item">
+
+              <h2 class="accordion-header tree-header">
+                <button class="accordion-button collapsed py-2" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#g{{ gestell.id }}">
+                  <i class="bi bi-bookshelf text-warning me-2"></i>
+                  <span class="fw-semibold">{{ gestell.name }}</span>
+                  {% if gestell.typ %}<small class="text-muted ms-1">({{ gestell.typ }})</small>{% endif %}
+                  {% set n_rf = gestell.regalfaecher|length %}
+                  {% set n_b  = gestell.behaelter|length %}
+                  {% if n_rf %}<span class="badge bg-info text-dark ms-2 fw-normal">{{ n_rf }} Fach/Fächer</span>{% endif %}
+                  {% if n_b  %}<span class="badge bg-success ms-1 fw-normal">{{ n_b }} Behälter</span>{% endif %}
+                </button>
+                <div class="tree-actions">
+                  <a href="{{ url_for('standort.regalfach_neu') }}?gestell_id={{ gestell.id }}&next=/standort"
+                     class="btn btn-sm btn-outline-info" title="Regalfach anlegen">
+                    <i class="bi bi-plus-lg"></i><i class="bi bi-list-columns-reverse"></i> Fach
+                  </a>
+                  <a href="{{ url_for('standort.behaelter_neu') }}?gestell_id={{ gestell.id }}&next=/standort"
+                     class="btn btn-sm btn-outline-success" title="Behälter anlegen">
+                    <i class="bi bi-plus-lg"></i><i class="bi bi-box-seam"></i> Beh.
+                  </a>
+                  <a href="{{ url_for('qr.gestell_qr', id=gestell.id) }}" target="_blank"
+                     class="btn btn-sm btn-outline-secondary" title="QR-Code">
+                    <i class="bi bi-qr-code"></i>
+                  </a>
+                  <a href="{{ url_for('standort.gestell_bearbeiten', id=gestell.id) }}?next=/standort"
+                     class="btn btn-sm btn-outline-secondary" title="Gestell bearbeiten">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                </div>
+              </h2>
+
+              <div id="g{{ gestell.id }}" class="accordion-collapse collapse">
+                <div class="accordion-body p-2 ps-4">
+
+                  {% for fach in gestell.regalfaecher %}
+                  <div class="mb-2">
+                    <div class="tree-leaf border rounded bg-light">
+                      <i class="bi bi-list-columns-reverse text-info me-2"></i>
+                      <span class="fw-semibold flex-grow-1">{{ fach.bezeichnung }}</span>
+                      {% if fach.behaelter %}<span class="badge bg-success me-1">{{ fach.behaelter|length }} Beh.</span>{% endif %}
+                      {% if fach.dinge %}<span class="badge bg-primary me-1">{{ fach.dinge|length }} Dinge</span>{% endif %}
+                      <div class="d-flex gap-1 ms-2">
+                        <a href="{{ url_for('standort.behaelter_neu') }}?regalfach_id={{ fach.id }}&next=/standort"
+                           class="btn btn-sm btn-outline-success py-0" title="Behälter anlegen">
+                          <i class="bi bi-plus-lg"></i><i class="bi bi-box-seam"></i> Beh.
+                        </a>
+                        <a href="{{ url_for('ding.neu') }}?regalfach_id={{ fach.id }}&next=/standort"
+                           class="btn btn-sm btn-outline-primary py-0" title="Ding anlegen">
+                          <i class="bi bi-plus-lg"></i><i class="bi bi-tag"></i> Ding
+                        </a>
+                        <a href="{{ url_for('qr.regalfach_qr', id=fach.id) }}" target="_blank"
+                           class="btn btn-sm btn-outline-secondary py-0" title="QR-Code">
+                          <i class="bi bi-qr-code"></i>
+                        </a>
+                        <a href="{{ url_for('standort.regalfach_bearbeiten', id=fach.id) }}?next=/standort"
+                           class="btn btn-sm btn-outline-secondary py-0" title="Bearbeiten">
+                          <i class="bi bi-pencil"></i>
+                        </a>
+                      </div>
+                    </div>
+
+                    {% for b in fach.behaelter | sort(attribute='name') %}
+                    <div class="tree-leaf ms-3 border-bottom">
+                      <i class="bi bi-box-seam text-success me-2"></i>
+                      <a href="{{ url_for('standort.behaelter_detail', id=b.id) }}"
+                         class="fw-semibold text-decoration-none flex-grow-1">{{ b.name }}</a>
+                      {% if b.typ %}<small class="text-muted me-1">({{ b.typ }})</small>{% endif %}
+                      <span class="badge bg-light text-dark border me-1">{{ b.dinge|length }} Dinge</span>
+                      <div class="d-flex gap-1">
+                        <a href="{{ url_for('ding.neu') }}?behaelter_id={{ b.id }}&next=/standort"
+                           class="btn btn-sm btn-outline-primary py-0" title="Ding anlegen">
+                          <i class="bi bi-plus-lg"></i><i class="bi bi-tag"></i> Ding
+                        </a>
+                        <a href="{{ url_for('qr.behaelter_qr', id=b.id) }}" target="_blank"
+                           class="btn btn-sm btn-outline-secondary py-0"><i class="bi bi-qr-code"></i></a>
+                        <a href="{{ url_for('standort.behaelter_bearbeiten', id=b.id) }}?next=/standort"
+                           class="btn btn-sm btn-outline-secondary py-0"><i class="bi bi-pencil"></i></a>
+                      </div>
+                    </div>
+                    {% endfor %}
+
+                    {% for ding in fach.dinge | sort(attribute='name') %}
+                    <div class="tree-leaf ms-3 border-bottom">
+                      <i class="bi bi-tag text-primary me-2"></i>
+                      <a href="{{ url_for('ding.detail', id=ding.id) }}"
+                         class="flex-grow-1 text-decoration-none">{{ ding.name }}</a>
+                      {% if ding.kategorie %}<span class="badge bg-primary me-1">{{ ding.kategorie.name }}</span>{% endif %}
+                      <a href="{{ url_for('qr.ding_qr', id=ding.id) }}" target="_blank"
+                         class="btn btn-sm btn-outline-secondary py-0 ms-1"><i class="bi bi-qr-code"></i></a>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  {% endfor %}
+
+                  {% set behaelter_direkt = gestell.behaelter | selectattr('regalfach_id', 'none') | list %}
+                  {% for b in behaelter_direkt | sort(attribute='name') %}
+                  <div class="tree-leaf border rounded mb-1">
+                    <i class="bi bi-box-seam text-success me-2"></i>
+                    <a href="{{ url_for('standort.behaelter_detail', id=b.id) }}"
+                       class="fw-semibold text-decoration-none flex-grow-1">{{ b.name }}</a>
+                    {% if b.typ %}<small class="text-muted me-1">({{ b.typ }})</small>{% endif %}
+                    <span class="badge bg-light text-dark border me-1">{{ b.dinge|length }} Dinge</span>
+                    <div class="d-flex gap-1">
+                      <a href="{{ url_for('ding.neu') }}?behaelter_id={{ b.id }}&next=/standort"
+                         class="btn btn-sm btn-outline-primary py-0" title="Ding anlegen">
+                        <i class="bi bi-plus-lg"></i><i class="bi bi-tag"></i> Ding
+                      </a>
+                      <a href="{{ url_for('qr.behaelter_qr', id=b.id) }}" target="_blank"
+                         class="btn btn-sm btn-outline-secondary py-0"><i class="bi bi-qr-code"></i></a>
+                      <a href="{{ url_for('standort.behaelter_bearbeiten', id=b.id) }}?next=/standort"
+                         class="btn btn-sm btn-outline-secondary py-0"><i class="bi bi-pencil"></i></a>
+                    </div>
+                  </div>
+                  {% endfor %}
+
+                  {% set dinge_direkt = gestell.dinge
+                       | selectattr('behaelter_id', 'none')
+                       | selectattr('regalfach_id', 'none') | list %}
+                  {% for ding in dinge_direkt | sort(attribute='name') %}
+                  <div class="tree-leaf border rounded mb-1">
+                    <i class="bi bi-tag text-primary me-2"></i>
+                    <a href="{{ url_for('ding.detail', id=ding.id) }}"
+                       class="flex-grow-1 text-decoration-none">{{ ding.name }}</a>
+                    {% if ding.kategorie %}<span class="badge bg-primary me-1">{{ ding.kategorie.name }}</span>{% endif %}
+                    <a href="{{ url_for('qr.ding_qr', id=ding.id) }}" target="_blank"
+                       class="btn btn-sm btn-outline-secondary py-0 ms-1"><i class="bi bi-qr-code"></i></a>
+                  </div>
+                  {% endfor %}
+
+                  {% if not gestell.regalfaecher and not gestell.behaelter and not gestell.dinge %}
+                  <p class="text-muted small mb-0">Leer –
+                    <a href="{{ url_for('standort.regalfach_neu') }}?gestell_id={{ gestell.id }}&next=/standort">Regalfach</a>,
+                    <a href="{{ url_for('standort.behaelter_neu') }}?gestell_id={{ gestell.id }}&next=/standort">Behälter</a> oder
+                    <a href="{{ url_for('ding.neu') }}?gestell_id={{ gestell.id }}&next=/standort">Ding</a> anlegen.
+                  </p>
+                  {% endif %}
+
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+            </div>
+
+            {% if raum.dinge %}
+            <div class="mt-2 pt-1 border-top">
+              <small class="text-muted ps-1">Dinge direkt im Raum:</small>
+              {% for ding in raum.dinge | sort(attribute='name') %}
+              <div class="tree-leaf border-bottom">
+                <i class="bi bi-tag text-primary me-2"></i>
+                <a href="{{ url_for('ding.detail', id=ding.id) }}"
+                   class="flex-grow-1 text-decoration-none">{{ ding.name }}</a>
+                <a href="{{ url_for('qr.ding_qr', id=ding.id) }}" target="_blank"
+                   class="btn btn-sm btn-outline-secondary py-0 ms-1"><i class="bi bi-qr-code"></i></a>
+              </div>
+              {% endfor %}
+            </div>
+            {% endif %}
+
+          </div>
+        </div>
       </div>
+      {% endfor %}
+      </div>
+
     </div>
   </div>
-  {% else %}
-  <p class="text-muted">Noch keine Zonen erfasst. <a href="{{ url_for('standort.zone_neu') }}">Zone anlegen</a></p>
-  {% endfor %}
 </div>
+{% endfor %}
+</div>
+
 {% endblock %}

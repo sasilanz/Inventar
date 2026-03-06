@@ -69,6 +69,7 @@ def raum_liste():
 @standort_bp.route('/raeume/neu', methods=['GET', 'POST'])
 def raum_neu():
     zonen = Zone.query.order_by(Zone.name).all()
+    prefill_zone_id = request.args.get('zone_id', type=int)
     if request.method == 'POST':
         raum = Raum(
             zone_id=request.form['zone_id'],
@@ -78,8 +79,11 @@ def raum_neu():
         db.session.add(raum)
         db.session.commit()
         flash('Raum gespeichert.', 'success')
-        return redirect(url_for('standort.raum_liste'))
-    return render_template('standort/raum_formular.html', raum=None, zonen=zonen)
+        next_url = request.form.get('next')
+        return redirect(next_url or url_for('standort.raum_liste'))
+    return render_template('standort/raum_formular.html', raum=None, zonen=zonen,
+                           prefill_zone_id=prefill_zone_id,
+                           next_url=request.args.get('next', ''))
 
 
 @standort_bp.route('/raeume/<int:id>/bearbeiten', methods=['GET', 'POST'])
@@ -92,8 +96,10 @@ def raum_bearbeiten(id):
         raum.beschreibung = request.form.get('beschreibung') or None
         db.session.commit()
         flash('Raum aktualisiert.', 'success')
-        return redirect(url_for('standort.raum_liste'))
-    return render_template('standort/raum_formular.html', raum=raum, zonen=zonen)
+        next_url = request.form.get('next')
+        return redirect(next_url or url_for('standort.raum_liste'))
+    return render_template('standort/raum_formular.html', raum=raum, zonen=zonen,
+                           next_url=request.args.get('next', ''))
 
 
 @standort_bp.route('/raeume/<int:id>/loeschen', methods=['POST'])
