@@ -46,11 +46,24 @@ def neu():
         if nach != 'Kein Standort':
             db.session.add(Bewegung(ding_id=ding.id, von_beschreibung=None, nach_beschreibung=nach))
         db.session.commit()
-        session['last_standort'] = _standort_fuer_session(ding)
+        ls = _standort_fuer_session(ding)
+        session['last_standort'] = ls
         flash('Ding gespeichert.', 'success')
-        return redirect(url_for('ding.detail', id=ding.id))
-    prefill = session.get('last_standort', {})
-    return render_template('ding/formular.html', ding=None, prefill=prefill, **_formular_daten())
+        if request.form.get('add_another'):
+            params = {k: v for k, v in ls.items()}
+            next_url = request.form.get('next')
+            if next_url:
+                params['next'] = next_url
+            return redirect(url_for('ding.neu', **params))
+        next_url = request.form.get('next')
+        return redirect(next_url or url_for('ding.detail', id=ding.id))
+    # URL-Params überschreiben Session-Prefill (z.B. aus Baumansicht)
+    url_prefill = {k: request.args.get(k) for k in
+                   ('behaelter_id', 'regalfach_id', 'gestell_id', 'raum_id')
+                   if request.args.get(k)}
+    prefill = url_prefill if url_prefill else session.get('last_standort', {})
+    return render_template('ding/formular.html', ding=None, prefill=prefill,
+                           next_url=request.args.get('next', ''), **_formular_daten())
 
 
 @ding_bp.route('/<int:id>/bearbeiten', methods=['GET', 'POST'])
