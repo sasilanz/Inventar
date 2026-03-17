@@ -69,7 +69,7 @@
       {% if b.typ %}
         <small class="text-muted ms-1">({{ b.typ }})</small>
       {% endif %}
-      <span class="badge bg-light text-dark ms-2">{{ b.dinge|length }} Dinge</span>
+      <span class="badge bg-light text-dark ms-2">{{ b.dinge|length|dinge }}</span>
     </a>
     <div class="d-flex gap-1 ms-2">
       <a href="{{ url_for('standort.behaelter_bearbeiten', id=b.id) }}"

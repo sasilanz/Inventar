@@ -80,15 +80,26 @@ class Ding(db.Model):
         return any(v.zurueck_am is None for v in self.verleih_eintraege)
 
     def standort_beschreibung(self):
-        """Lesbare Standortangabe für Bewegungshistorie."""
+        """Lesbare Standortangabe mit vollständigem Pfad."""
         if self.behaelter_id and self.behaelter:
-            return f'{self.behaelter.name} (Behälter)'
+            b = self.behaelter
+            if b.regalfach:
+                pfad = f"{b.regalfach.gestell.raum.zone.name} → {b.regalfach.gestell.raum.name} → {b.regalfach.gestell.name} → {b.regalfach.bezeichnung}"
+            elif b.gestell:
+                pfad = f"{b.gestell.raum.zone.name} → {b.gestell.raum.name} → {b.gestell.name}"
+            elif b.raum:
+                pfad = f"{b.raum.zone.name} → {b.raum.name}"
+            else:
+                pfad = ''
+            return f'{pfad} → {b.name}' if pfad else b.name
         if self.regalfach_id and self.regalfach:
-            return f'{self.regalfach.bezeichnung} / {self.regalfach.gestell.name}'
+            f = self.regalfach
+            return f'{f.gestell.raum.zone.name} → {f.gestell.raum.name} → {f.gestell.name} → {f.bezeichnung}'
         if self.gestell_id and self.gestell:
-            return f'{self.gestell.name} (direkt im Gestell)'
+            g = self.gestell
+            return f'{g.raum.zone.name} → {g.raum.name} → {g.name}'
         if self.raum_id and self.raum:
-            return f'{self.raum.name} (frei im Raum)'
+            return f'{self.raum.zone.name} → {self.raum.name}'
         return 'Kein Standort'
 
     def __repr__(self):

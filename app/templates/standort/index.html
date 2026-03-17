@@ -140,7 +140,7 @@
                       <i class="bi bi-list-columns-reverse text-info me-2"></i>
                       <span class="fw-semibold flex-grow-1">{{ fach.bezeichnung }}</span>
                       {% if fach.behaelter %}<span class="badge bg-success me-1">{{ fach.behaelter|length }} Beh.</span>{% endif %}
-                      {% if fach.dinge %}<span class="badge bg-primary me-1">{{ fach.dinge|length }} Dinge</span>{% endif %}
+                      {% if fach.dinge %}<span class="badge bg-primary me-1">{{ fach.dinge|length|dinge }}</span>{% endif %}
                       <div class="d-flex gap-1 ms-2">
                         <a href="{{ url_for('standort.behaelter_neu') }}?regalfach_id={{ fach.id }}&next=/standort"
                            class="btn btn-sm btn-outline-success py-0" title="Behälter anlegen">
@@ -167,7 +167,7 @@
                       <a href="{{ url_for('standort.behaelter_detail', id=b.id) }}"
                          class="fw-semibold text-decoration-none flex-grow-1">{{ b.name }}</a>
                       {% if b.typ %}<small class="text-muted me-1">({{ b.typ }})</small>{% endif %}
-                      <span class="badge bg-light text-dark border me-1">{{ b.dinge|length }} Dinge</span>
+                      <span class="badge bg-light text-dark border me-1">{{ b.dinge|length|dinge }}</span>
                       <div class="d-flex gap-1">
                         <a href="{{ url_for('ding.neu') }}?behaelter_id={{ b.id }}&next=/standort"
                            class="btn btn-sm btn-outline-primary py-0" title="Ding anlegen">
@@ -201,7 +201,7 @@
                     <a href="{{ url_for('standort.behaelter_detail', id=b.id) }}"
                        class="fw-semibold text-decoration-none flex-grow-1">{{ b.name }}</a>
                     {% if b.typ %}<small class="text-muted me-1">({{ b.typ }})</small>{% endif %}
-                    <span class="badge bg-light text-dark border me-1">{{ b.dinge|length }} Dinge</span>
+                    <span class="badge bg-light text-dark border me-1">{{ b.dinge|length|dinge }}</span>
                     <div class="d-flex gap-1">
                       <a href="{{ url_for('ding.neu') }}?behaelter_id={{ b.id }}&next=/standort"
                          class="btn btn-sm btn-outline-primary py-0" title="Ding anlegen">

@@ -4,12 +4,37 @@
 
 {% set back = url_for('standort.raum_detail', id=raum.id) %}
 
+{# Breadcrumb #}
+<nav aria-label="breadcrumb" class="mb-2">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('standort.index') }}">Standorte</a></li>
+    <li class="breadcrumb-item active">{{ raum.zone.name }} / {{ raum.name }}</li>
+  </ol>
+</nav>
+
 <div class="d-flex justify-content-between align-items-start mb-3">
   <div>
     <h1><i class="bi bi-door-open"></i> {{ raum.name }}</h1>
     <p class="text-muted mb-0">{{ raum.zone.name }}</p>
   </div>
   <div class="d-flex gap-2 flex-wrap justify-content-end">
+    {# Prev/Next im selben Zone #}
+    {% if prev_r %}
+    <a href="{{ url_for('standort.raum_detail', id=prev_r.id) }}"
+       class="btn btn-outline-secondary btn-sm" title="{{ prev_r.name }}">
+      <i class="bi bi-chevron-left"></i>
+    </a>
+    {% else %}
+    <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-chevron-left"></i></button>
+    {% endif %}
+    {% if next_r %}
+    <a href="{{ url_for('standort.raum_detail', id=next_r.id) }}"
+       class="btn btn-outline-secondary btn-sm" title="{{ next_r.name }}">
+      <i class="bi bi-chevron-right"></i>
+    </a>
+    {% else %}
+    <button class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-chevron-right"></i></button>
+    {% endif %}
     <a href="{{ url_for('qr.raum_qr', id=raum.id) }}" target="_blank"
        class="btn btn-outline-secondary btn-sm">
       <i class="bi bi-qr-code"></i> QR
@@ -60,7 +85,7 @@
           {% endif %}
           {% set n_dinge_direkt = gestell.dinge | selectattr('behaelter_id', 'none') | list | length %}
           {% if n_dinge_direkt %}
-            <span class="badge bg-primary ms-1 flex-shrink-0">{{ n_dinge_direkt }} Dinge</span>
+            <span class="badge bg-primary ms-1 flex-shrink-0">{{ n_dinge_direkt|dinge }}</span>
           {% endif %}
         </button>
       </h2>
@@ -218,7 +243,7 @@
     <a href="{{ url_for('standort.behaelter_detail', id=b.id) }}" class="text-decoration-none flex-grow-1">
       <i class="bi bi-box-seam me-2 text-muted"></i>
       <strong>{{ b.name }}</strong>
-      <span class="badge bg-light text-dark ms-2">{{ b.dinge|length }} Dinge</span>
+      <span class="badge bg-light text-dark ms-2">{{ b.dinge|length|dinge }}</span>
     </a>
     <div class="d-flex gap-1 ms-2">
       <a href="{{ url_for('standort.behaelter_bearbeiten', id=b.id, next=back) }}"

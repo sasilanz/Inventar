@@ -53,7 +53,7 @@
         <span class="badge bg-light text-dark ms-1">{{ gestell.behaelter|length }} Behälter</span>
       {% endif %}
       {% if gestell.dinge %}
-        <span class="badge bg-primary ms-1">{{ gestell.dinge|length }} Dinge</span>
+        <span class="badge bg-primary ms-1">{{ gestell.dinge|length|dinge }}</span>
       {% endif %}
     </a>
     <div class="d-flex gap-1 ms-2">

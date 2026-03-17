@@ -16,7 +16,7 @@
       {% if k.beschreibung %}
         <small class="text-muted ms-2">{{ k.beschreibung }}</small>
       {% endif %}
-      <span class="badge bg-secondary ms-2">{{ k.dinge|length }} Dinge</span>
+      <span class="badge bg-secondary ms-2">{{ k.dinge|length|dinge }}</span>
     </div>
     <div class="d-flex gap-1">
       <a href="{{ url_for('stammdaten.kategorie_bearbeiten', id=k.id) }}"
@@ -25,11 +25,18 @@
       </a>
       <form method="post" action="{{ url_for('stammdaten.kategorie_loeschen', id=k.id) }}"
             onsubmit="return confirm('Kategorie „{{ k.name }}" löschen?')">
-        <button class="btn btn-sm btn-outline-danger"
-                {{ 'disabled' if k.dinge|length > 0 }}
-                title="{{ 'Kann nicht gelöscht werden – noch in Verwendung' if k.dinge|length > 0 }}">
+        {% if k.dinge|length > 0 %}
+        <span title="Kann nicht gelöscht werden – noch {{ k.dinge|length|dinge }} zugeordnet"
+              style="cursor:not-allowed; display:inline-block;">
+          <button class="btn btn-sm btn-outline-danger" disabled style="pointer-events:none;">
+            <i class="bi bi-trash"></i>
+          </button>
+        </span>
+        {% else %}
+        <button class="btn btn-sm btn-outline-danger">
           <i class="bi bi-trash"></i>
         </button>
+        {% endif %}
       </form>
     </div>
   </div>

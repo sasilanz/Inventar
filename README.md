@@ -165,7 +165,17 @@ docker compose exec app flask db upgrade
 
 ## Daten sichern
 
-### Datenbank-Backup erstellen
+### Automatisches Backup (DB + Medien)
+
+Das Script `backup.sh` erstellt einen vollständigen Dump (DB + Medien) und behält die letzten 14 Backups:
+
+```bash
+./backup.sh
+```
+
+Backups landen in `./backups/<timestamp>/`.
+
+### Manuelles Datenbank-Backup
 
 ```bash
 docker compose exec db pg_dump -U inventardb inventardb > backup_$(date +%Y%m%d).sql
@@ -175,6 +185,40 @@ docker compose exec db pg_dump -U inventardb inventardb > backup_$(date +%Y%m%d)
 
 ```bash
 cat backup_20260101.sql | docker compose exec -T db psql -U inventardb inventardb
+```
+
+---
+
+## Prod → Test synchronisieren
+
+Das Script `sync-from-prod.sh` holt die aktuelle Prod-Datenbank und importiert sie lokal,
+damit Tests auf realen Daten durchgeführt werden können.
+
+**Voraussetzung:** SSH-Zugang zu `dietipi` (passwordless, Key-basiert).
+
+```bash
+# Nur DB synchronisieren (schnell, ~1s)
+./sync-from-prod.sh
+
+# DB + Medien synchronisieren (rsync, nur Änderungen)
+./sync-from-prod.sh --media
+```
+
+---
+
+## Deploy-Ablauf (Prod)
+
+Vor jedem Deploy auf Prod zuerst ein Backup erstellen:
+
+```bash
+# 1. Prod sichern
+ssh dietipi "cd Inventar && ./backup.sh"
+
+# 2. Code deployen
+ssh dietipi "cd Inventar && git pull && docker compose up -d --build && docker compose exec app flask db upgrade"
+
+# 3. Optional: lokale Test-DB auf aktuellen Stand bringen
+./sync-from-prod.sh
 ```
 
 ---

@@ -327,22 +327,49 @@ def behaelter_loeschen(id):
 @standort_bp.route('/behaelter/<int:id>')
 def behaelter_detail(id):
     behaelter = Behaelter.query.get_or_404(id)
-    return render_template('standort/behaelter_detail.html', behaelter=behaelter)
+    # Geschwister: alle Behälter im selben Elternelement
+    if behaelter.regalfach_id:
+        siblings = Behaelter.query.filter_by(regalfach_id=behaelter.regalfach_id).order_by(Behaelter.name).all()
+    elif behaelter.gestell_id:
+        siblings = Behaelter.query.filter_by(gestell_id=behaelter.gestell_id).order_by(Behaelter.name).all()
+    elif behaelter.raum_id:
+        siblings = Behaelter.query.filter_by(raum_id=behaelter.raum_id).order_by(Behaelter.name).all()
+    else:
+        siblings = []
+    idx = next((i for i, b in enumerate(siblings) if b.id == id), None)
+    prev_b = siblings[idx - 1] if idx is not None and idx > 0 else None
+    next_b = siblings[idx + 1] if idx is not None and idx < len(siblings) - 1 else None
+    return render_template('standort/behaelter_detail.html',
+                           behaelter=behaelter, prev_b=prev_b, next_b=next_b)
 
 
 @standort_bp.route('/gestelle/<int:id>')
 def gestell_detail(id):
     gestell = Gestell.query.get_or_404(id)
-    return render_template('standort/gestell_detail.html', gestell=gestell)
+    siblings = Gestell.query.filter_by(raum_id=gestell.raum_id).order_by(Gestell.name).all()
+    idx = next((i for i, g in enumerate(siblings) if g.id == id), None)
+    prev_g = siblings[idx - 1] if idx is not None and idx > 0 else None
+    next_g = siblings[idx + 1] if idx is not None and idx < len(siblings) - 1 else None
+    return render_template('standort/gestell_detail.html',
+                           gestell=gestell, prev_g=prev_g, next_g=next_g)
 
 
 @standort_bp.route('/regalfach/<int:id>')
 def regalfach_detail(id):
     fach = Regalfach.query.get_or_404(id)
-    return render_template('standort/regalfach_detail.html', fach=fach)
+    siblings = Regalfach.query.filter_by(gestell_id=fach.gestell_id).order_by(Regalfach.bezeichnung).all()
+    idx = next((i for i, f in enumerate(siblings) if f.id == id), None)
+    prev_f = siblings[idx - 1] if idx is not None and idx > 0 else None
+    next_f = siblings[idx + 1] if idx is not None and idx < len(siblings) - 1 else None
+    return render_template('standort/regalfach_detail.html',
+                           fach=fach, prev_f=prev_f, next_f=next_f)
 
 
 @standort_bp.route('/raum/<int:id>')
 def raum_detail(id):
     raum = Raum.query.get_or_404(id)
-    return render_template('standort/raum_detail.html', raum=raum)
+    siblings = Raum.query.filter_by(zone_id=raum.zone_id).order_by(Raum.name).all()
+    idx = next((i for i, r in enumerate(siblings) if r.id == id), None)
+    prev_r = siblings[idx - 1] if idx is not None and idx > 0 else None
+    next_r = siblings[idx + 1] if idx is not None and idx < len(siblings) - 1 else None
+    return render_template('standort/raum_detail.html', raum=raum, prev_r=prev_r, next_r=next_r)

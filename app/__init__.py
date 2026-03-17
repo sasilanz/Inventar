@@ -18,6 +18,10 @@ def create_app():
 
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+    @app.template_filter('dinge')
+    def dinge_filter(n):
+        return f"{n} {'Ding' if n == 1 else 'Dinge'}"
+
     from app.routes import main_bp, standort_bp, ding_bp, media_bp, verleih_bp, qr_bp, stammdaten_bp
     app.register_blueprint(main_bp)
     app.register_blueprint(standort_bp, url_prefix='/standort')

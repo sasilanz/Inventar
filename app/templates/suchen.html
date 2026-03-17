@@ -69,7 +69,7 @@
             {% for r in raeume %}
             <option value="{{ r.id }}" data-zone="{{ r.zone_id }}"
                     {{ 'selected' if r.id == raum_id }}>
-              {{ r.name }}
+              {{ r.zone.name }} / {{ r.name }}
             </option>
             {% endfor %}
           </select>

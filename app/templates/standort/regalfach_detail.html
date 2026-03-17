@@ -2,16 +2,38 @@
 {% block title %}{{ fach.bezeichnung }} – {{ fach.gestell.name }}{% endblock %}
 {% block content %}
 
+{# Breadcrumb #}
+<nav aria-label="breadcrumb" class="mb-2">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('standort.index') }}">Standorte</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('standort.raum_detail', id=fach.gestell.raum.id) }}">{{ fach.gestell.raum.zone.name }} / {{ fach.gestell.raum.name }}</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('standort.gestell_detail', id=fach.gestell.id) }}">{{ fach.gestell.name }}</a></li>
+    <li class="breadcrumb-item active">{{ fach.bezeichnung }}</li>
+  </ol>
+</nav>
+
 <div class="d-flex justify-content-between align-items-start mb-3">
   <div>
-    <h1><i class="bi bi-bookshelf"></i> {{ fach.bezeichnung }}</h1>
-    <p class="text-muted mb-0">
-      {{ fach.gestell.raum.zone.name }} /
-      {{ fach.gestell.raum.name }} /
-      {{ fach.gestell.name }}
-    </p>
+    <h1><i class="bi bi-grid"></i> {{ fach.bezeichnung }}</h1>
   </div>
-  <div class="d-flex gap-2">
+  <div class="d-flex gap-2 align-items-center">
+    {# Prev/Next im selben Gestell #}
+    {% if prev_f %}
+    <a href="{{ url_for('standort.regalfach_detail', id=prev_f.id) }}"
+       class="btn btn-outline-secondary" title="{{ prev_f.bezeichnung }}">
+      <i class="bi bi-chevron-left"></i>
+    </a>
+    {% else %}
+    <button class="btn btn-outline-secondary" disabled><i class="bi bi-chevron-left"></i></button>
+    {% endif %}
+    {% if next_f %}
+    <a href="{{ url_for('standort.regalfach_detail', id=next_f.id) }}"
+       class="btn btn-outline-secondary" title="{{ next_f.bezeichnung }}">
+      <i class="bi bi-chevron-right"></i>
+    </a>
+    {% else %}
+    <button class="btn btn-outline-secondary" disabled><i class="bi bi-chevron-right"></i></button>
+    {% endif %}
     <a href="{{ url_for('qr.regalfach_qr', id=fach.id) }}" target="_blank"
        class="btn btn-outline-secondary">
       <i class="bi bi-qr-code"></i> QR
@@ -41,7 +63,7 @@
       <i class="bi bi-box-seam me-2 text-muted"></i>
       <span class="fw-bold">{{ b.name }}</span>
       {% if b.typ %}<small class="text-muted ms-1">({{ b.typ }})</small>{% endif %}
-      <span class="badge bg-light text-dark ms-2">{{ b.dinge|length }} Dinge</span>
+      <span class="badge bg-light text-dark ms-2">{{ b.dinge|length|dinge }}</span>
     </div>
     <i class="bi bi-chevron-right text-muted"></i>
   </a>
